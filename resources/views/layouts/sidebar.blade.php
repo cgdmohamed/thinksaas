@@ -1,11 +1,11 @@
 <!-- partial:../../partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
 
-    <div class="sidebar-search pl-4 pr-4">
+    <div class="pl-4 pr-4 sidebar-search">
         <input type="text" id="menu-search" placeholder="{{ __('search_menu') }}" class="form-control menu-search border-theme form-control-sm">
     </div>
 
-    <div class="sidebar-search pl-4 pr-4 mt-2">
+    <div class="pl-4 pr-4 mt-2 sidebar-search">
         <input type="text" id="menu-search-mini" placeholder="{{ __('search_menu') }}" class="form-control d-lg-none border-theme">
     </div>
 
@@ -17,6 +17,26 @@
                 <span class="menu-title">{{ __('dashboard') }}</span>
             </a>
         </li>
+        {{-- Books Section --}}
+        @can(['create-book', 'edit-book', 'delete-book'])
+            <li class="nav-item">
+                <a href="{{ route('books.index') }}" class="nav-link">
+                    <i class="fa fa-book menu-icon"></i>
+                    <span class="menu-title">{{ __('Books') }} </span>
+                </a>
+            </li>
+        @endcan
+
+        {{-- Courses Section --}}
+        @can(['create-training-courses', 'edit-training-courses', 'delete-training-courses'])
+            <li class="nav-item">
+                <a href="{{ route('courses.index') }}" class="nav-link">
+                    <i class="fa fa-graduation-cap menu-icon" aria-hidden="true"></i>
+                    <span class="menu-title">{{ __('Courses') }} </span>
+                </a>
+            </li>
+        @endcan
+
         {{-- Academics --}}
         @canany(['medium-create','section-create','subject-create','class-create','subject-create','promote-student-create','transfer-student-create'])
             <li class="nav-item">
@@ -58,8 +78,8 @@
 
                         @can('class-group-create')
                             <li class="nav-item"><a href="{{ route('class-group.index') }}" class="nav-link"> {{ __('class_group') }} </a></li>
-                        @endcan 
-                        
+                        @endcan
+
 
 
                         @can('class-section-create')
@@ -129,7 +149,7 @@
                         @can('student-reset-password')
                             <li class="nav-item"><a href="{{ route('students.reset-password.index') }}" class="nav-link">{{ __('students') . ' ' . __('reset_password') }}</a></li>
                         @endcan
-                        
+
                         @can('student-create')
                             <li class="nav-item"><a href="{{ route('students.create-bulk-data') }}" class="nav-link">{{ __('add_bulk_data') }}</a></li>
                         @endcan
@@ -374,7 +394,7 @@
                                 </a>
                             </li>
                         @endcan
-                      
+
                         @can('exam-upload-marks')
 
                             <li class="nav-item">
@@ -394,7 +414,7 @@
                                     {{ __('bulk upload') }} {{ __('Exam Marks') }}
                                 </a>
                             </li>
-                            
+
                         @endcan
                         @can('exam-result')
                             <li class="nav-item">
@@ -541,15 +561,15 @@
                                     <a href="{{ route('school-inquiry.index') }}" class="nav-link">
                                         {{ __('school_inquires') }}
                                     </a>
-                                </li>  
+                                </li>
                             @endif
-                        @endcanany 
-                        @canany(['schools-list','schools-create', 'schools-edit', 'schools-delete']) 
+                        @endcanany
+                        @canany(['schools-list','schools-create', 'schools-edit', 'schools-delete'])
                             <li class="nav-item">
                                 <a href="{{ route('schools.index') }}" class="nav-link">
                                     {{ __('schools_details') }}
                                 </a>
-                            </li> 
+                            </li>
                         @endcanany
                     </ul>
                 </div>
@@ -637,8 +657,8 @@
             <li class="nav-item">
                 <a href="#payroll-menu" class="nav-link" data-toggle="collapse" data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Expense Management')">
                     <i class="fa fa-credit-card-alt menu-icon"></i>
-                    <span class="menu-title">{{ __('payroll') }}</span>    
-                    <i class="menu-arrow"></i>       
+                    <span class="menu-title">{{ __('payroll') }}</span>
+                    <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="payroll-menu">
                     <ul class="nav flex-column sub-menu">
@@ -690,7 +710,7 @@
                 </a>
                 <div class="collapse" id="certificate-menu">
                     <ul class="nav flex-column sub-menu">
-                        
+
                         @canany(['certificate-create', 'certificate-list','certificate-edit', 'certificate-delete'])
                             <li class="nav-item">
                                 <a href="{{ url('certificate-template') }}" class="nav-link" data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('ID Card - Certificate Generation')">
@@ -908,7 +928,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('school.web-settings.index') }}" data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Website Management')">{{ __('content') }}</a>
                         </li>
-                        
+
                         @canany(['faqs-create','faqs-list','faqs-edit','faqs-delete'])
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('faqs.index') }}" data-name="{{ Auth::user()->getRoleNames()[0] }}" data-access="@hasFeatureAccess('Website Management')">{{ __('faqs') }}</a>
@@ -918,8 +938,8 @@
                 </div>
             </li>
         @endcan
-    
-        
+
+
 
 
         {{-- settings --}}

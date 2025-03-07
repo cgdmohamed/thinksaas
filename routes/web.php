@@ -79,6 +79,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\ChapterController;
+use App\Http\Controllers\TrainingCourseController;
 
 
 /*
@@ -158,7 +161,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete("/{id}/deleted", [FormFieldsController::class, 'schoolTrash'])->name('school-custom-field.trash');
 
         });
-        
+
         Route::group(['prefix' => 'schools'], static function () {
             Route::put("/{id}/restore", [SchoolController::class, 'restore'])->name('schools.restore');
             Route::delete("/{id}/deleted", [SchoolController::class, 'trash'])->name('schools.trash');
@@ -174,7 +177,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('/school-inquiry-list', [SchoolController::class, 'schoolInquiryList'])->name('school-inquiry.list');
             Route::post('/school-inquiry-update', [SchoolController::class, 'schoolInquiryUpdate'])->name('school-inquiry.update');
             Route::delete("/{id}/school-inquiry-delete", [SchoolController::class, 'schoolInquiryDelete'])->name('school-inquiry.delete');
-            
+
         });
         Route::resource('schools', SchoolController::class);
 
@@ -209,7 +212,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'subscriptions'], static function () {
             Route::get('plan/{id}/type/{type}/current-plan/{isCurrentPlan?}', [SubscriptionController::class, 'plan']);
             Route::get('prepaid/package/{package_id}/{type?}/{isCurrentPlan?}', [SubscriptionController::class, 'prepaid_plan']);
-            
+
             Route::get('history', [SubscriptionController::class, 'history'])->name('subscriptions.history');
             Route::get('cancel-upcoming/{id?}', [SubscriptionController::class, 'cancel_upcoming'])->name('subscriptions.cancel.upcoming');
             Route::get('confirm-upcoming-plan/{id}', [SubscriptionController::class, 'confirm_upcoming_plan']);
@@ -260,7 +263,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('section/delete/{id}', [WebSettingsController::class, 'feature_section_delete'])->name('web-settings-section.destroy');
 
             Route::PATCH('feature-section/change/rank', [WebSettingsController::class, 'feature_section_rank'])->name('feature_section_rank');
-            
+
         });
 
         /*** System Settings ***/
@@ -351,15 +354,15 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::delete('payroll-setting/{id}',[StaffController::class,'deletePayrollSetting']);
             Route::put('payroll-setting/{id}',[StaffController::class,'updatePayrollSetting']);
-            
+
 
         });
-        
+
         Route::resource('staff', StaffController::class);
         Route::put("staff/{id}/change-status", [StaffController::class, 'restore'])->name('staff.restore');
         Route::delete("staff/{id}/deleted", [StaffController::class, 'trash'])->name('staff.trash');
         Route::post("staff/change-status-bulk", [StaffController::class, 'changeStatusBulk']);
-       
+
 
         /*** Medium ***/
         Route::group(['prefix' => 'mediums'], static function () {
@@ -430,12 +433,12 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'students'], static function () {
             Route::get('create-bulk', [StudentController::class, 'createBulkData'])->name('students.create-bulk-data');
             Route::post('store-bulk', [StudentController::class, 'storeBulkData'])->name('students.store-bulk-data');
-            
+
             // Update bulk profile student & guardian
             Route::get('update-profile', [StudentController::class, 'update_profile'])->name('students.upload-profile');
             Route::get('list/{id?}', [StudentController::class, 'list'])->name('students.list');
             Route::post('update-profile', [StudentController::class, 'store_update_profile'])->name('students.update-profile');
-            
+
 
             Route::get('download-file', [StudentController::class, 'downloadSampleFile'])->name('student.bulk-data-sample');
             Route::delete('change-status/{id}', [StudentController::class, 'changeStatus'])->name('student.change-status');
@@ -578,7 +581,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('exams/view-marks', [ExamController::class, 'viewMarksindex'])->name('exam.view-marks');
         Route::get('exams/view-marks-list', [ExamController::class, 'viewMarksShow'])->name('exam.view-marks-list');
         Route::get('exams/get-exams/{class_section_id}', [ExamController::class, 'getExamByClassId'])->name('exams.classes');
-    
+
         Route::resource('exams', ExamController::class);
 
         // TODO make two groups promote student and transfer student and classify the routes related to their group
@@ -592,7 +595,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('language-sample', [LanguageController::class, 'language_sample']);
         Route::get('language-json-file/{code?}', [LanguageController::class, 'language_file'])->name('language.json.file');
 
-        
+
         Route::get('language-list', [LanguageController::class, 'show']);
         Route::resource('language', LanguageController::class);
 
@@ -644,7 +647,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('/fees-over-due/{class_section_id}', [FeesController::class, 'feesOverDue']);
             Route::post('/student-account-deactivate', [FeesController::class, 'studentAccountDeactivate'])->name('deactivate-student-account');
 
-           
+
         });
         Route::resource('fees', FeesController::class);
 
@@ -669,7 +672,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::resource('online-exam-question', OnlineExamQuestionController::class);
         // End Online Exam Routes
 
-        
+
 
         /*** School Settings ***/
         Route::group(['prefix' => 'school-settings'], static function () {
@@ -681,7 +684,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::get('email-template', [SchoolSettingsController::class, 'emailTemplate'])->name('school-settings.email.template');
             Route::put('email-template', [SchoolSettingsController::class, 'emailTemplateUpdate'])->name('school-settings.email-template.update');
-            
+
 
             Route::get('refund-cancellation', [SchoolSettingsController::class, 'refund_cancellation'])->name('school-settings.refund-cancellation');
 
@@ -701,7 +704,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         });
 
 
-        
+
 
         /*** Form Fields ***/
         Route::group(['prefix' => 'form-fields'], static function () {
@@ -726,7 +729,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('payroll/slip/{id?}',[PayrollController::class,'slip'])->name('payroll.slip');
         Route::get('payroll/slips',[PayrollController::class,'slip_index'])->name('payroll.slip.index');
         Route::get('payroll/slips/list',[PayrollController::class,'slip_list'])->name('payroll.slip.list');
-        
+
         Route::resource('payroll', PayrollController::class)->only(['index', 'store', 'show']);
 
         // Leave
@@ -775,7 +778,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('delete/{table}/{id}', [Controller::class, 'relatedDataDestroy'])->name('related-data.trash');
         });
 
-        
+
         Route::group(['prefix' => 'gallery'], static function () {
             Route::delete('file/delete/{id}', [GalleryController::class, 'deleteFile'])->name('gallery.delete');
         });
@@ -787,8 +790,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         });
         Route::resource('notifications', NotificationController::class);
 
-        
-        
+
+
 
         Route::group(['prefix' => 'school'], static function () {
             Route::group(['prefix' => 'web-settings'], static function () {
@@ -796,7 +799,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
                 Route::post('/', [WebSettingsController::class, 'school_store'])->name('school.web-settings.store');
 
             });
-            
+
         });
         Route::resource('web-settings', WebSettingsController::class);
 
@@ -892,7 +895,7 @@ Route::get('/pay', function () {
 
     // Initialize cURL session
     $ch = curl_init();
-    
+
     // Set the cURL options
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -901,16 +904,16 @@ Route::get('/pay', function () {
         "Authorization: Bearer " . env('PAYSTACK_SECRET_KEY'),
         "Cache-Control: no-cache",
     ]);
-    
+
     // Return response instead of printing it
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
+
     // Execute cURL request
     $response = curl_exec($ch);
-    
+
     // Close cURL session
     curl_close($ch);
-    
+
     // Decode the JSON response
     $response = json_decode($response);
     // dd($response );
@@ -938,7 +941,7 @@ Route::get('callback', function (Request $request) {
 
     // Initialize cURL to verify the transaction
     $curl = curl_init();
-    
+
     curl_setopt_array($curl, [
         CURLOPT_URL => "https://api.paystack.co/transaction/verify/" . $reference,
         CURLOPT_RETURNTRANSFER => true,
@@ -953,7 +956,7 @@ Route::get('callback', function (Request $request) {
     // Execute cURL request and handle errors
     $response = curl_exec($curl);
     $err = curl_error($curl);
-    
+
     // Close cURL session
     curl_close($curl);
 
@@ -964,7 +967,7 @@ Route::get('callback', function (Request $request) {
 
     // Decode the JSON response
     $response = json_decode($response, true);
-    
+
     // Check the response from Paystack API
     if ($response['status'] == true && $response['data']['status'] == 'success') {
         // Payment was successful
@@ -1001,11 +1004,11 @@ Route::get('callback', function (Request $request) {
 })->name('callback');
 
 Route::get('suceess',function () {
-    
+
 })->name('suceess');
 
 Route::get('cancel',function () {
-    
+
 })->name('cancel');
 
 
@@ -1192,4 +1195,39 @@ Route::get('demo-tokens', static function () {
             return $student->createToken($student->first_name)->plainTextToken;
         });
     }
+});
+
+
+/**
+ * Books Implementation
+ */
+Route::middleware(['Role', 'checkSchoolStatus', 'status', 'SwitchDatabase', 'verifiedEmail'])->group(function () {
+    // Route to upload books
+    Route::get('books/create', [BookController::class, 'create'])->name('books.create');
+    Route::post('books', [BookController::class, 'store'])->name('books.store');
+
+    // Route to view all books
+    Route::get('books', [BookController::class, 'index'])->name('books.index');
+
+    // Route to view a single book
+    Route::get('books/{book}', [BookController::class, 'show'])->name('books.show');
+
+    // Route to delete a book
+    Route::delete('books/{book}', [BookController::class, 'destroy'])->name('books.destroy');
+
+    // Route to assign books to schools
+    Route::post('schools/{schoolId}/assign-books', [BookController::class, 'assignBooks'])->name('books.assign');
+
+    // Route to view a chapter
+    Route::get('chapters/{chapter}', [ChapterController::class, 'show'])->name('chapters.show');
+
+    // Route to assign books to schools (for SchoolController)
+    Route::post('schools/{school}/assign-books', [SchoolController::class, 'assignBooks'])->name('schools.assignBooks');
+});
+
+/**
+ * Training Courses Implementation
+ */
+Route::middleware(['Role', 'checkSchoolStatus', 'status', 'SwitchDatabase', 'verifiedEmail'])->group(function () {
+    Route::resource('courses', TrainingCourseController::class);
 });
