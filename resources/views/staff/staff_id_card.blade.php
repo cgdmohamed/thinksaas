@@ -55,9 +55,9 @@
             font-weight: bold;
             border-bottom-right-radius: 10px;
         }
-        
+
         .footer {
-            background-color: {{ $settings['staff_footer_color'] ?? '#56cc99' }};
+            background-color: {{ $settings['staff_footer_color'] ?? '#3b97d2' }};
             color: {{ $settings['staff_header_footer_text_color'] ?? 'black' }};
             position: fixed;
             width: 100%;
@@ -87,7 +87,7 @@
             padding: 10px;
             position: fixed;
             bottom: 35px;
-            right: 10px;   
+            right: 10px;
         }
         .vertical-school-name {
             padding: 10px 10px !important;
@@ -173,7 +173,7 @@
     @foreach ($users as $key => $user)
     <div class="card-body">
         @if ($settings['staff_layout_type'] == 'horizontal')
-            
+
             <table class="table full-width">
                 <tr class="header">
                     <th class="school-logo">
@@ -193,17 +193,17 @@
                         @if ($user->getRawOriginal('image'))
                             <img class="staff-profile" height="120" width="120" align="center" src="{{ public_path('storage/').$user->getRawOriginal('image') }}" alt="">
                         @else
-                            <img class="staff-profile" height="120" width="120" align="center" src="{{ public_path('assets/dummy_logo.jpg') }}" alt="">    
+                            <img class="staff-profile" height="120" width="120" align="center" src="{{ public_path('assets/dummy_logo.jpg') }}" alt="">
                         @endif
-                        
+
                     </td>
                     @if (in_array('name',$settings['staff_id_card_fields']))
                         <th class="staff-data">Name :</th>
                         <td>{{ $user->full_name }}</td>
                     @endif
-                    
+
                 </tr>
-                
+
                 @if (in_array('role',$settings['staff_id_card_fields']))
                 <tr>
                     <th class="staff-data">Role :</th>
@@ -252,7 +252,7 @@
                     <td>{{ $sessionYear->name }}</td>
                 </tr>
                 @endif
-                
+
                 @foreach ($users[0]->extra_user_details as $data)
                     @if (in_array($data->form_field->type, ['text','number','radio','textarea']))
                         <tr>
@@ -305,7 +305,7 @@
                         @if ($user->getRawOriginal('image'))
                             <img class="staff-profile" height="120" width="120" align="center" src="{{ public_path('storage/').$user->getRawOriginal('image') }}" alt="">
                         @else
-                            <img class="staff-profile" height="120" width="120" align="center" src="{{ public_path('assets/dummy_logo.jpg') }}" alt="">    
+                            <img class="staff-profile" height="120" width="120" align="center" src="{{ public_path('assets/dummy_logo.jpg') }}" alt="">
                         @endif
                     </td>
                 </tr>
@@ -403,19 +403,19 @@
             <div class="background-image">
                 @if ($settings['staff_background_image'] ?? '')
                     <img src="{{ public_path('storage/').$settings['staff_background_image'] }}" class="background_image" height="140" width="360" alt="">
-                    
+
                 @endif
             </div>
         @else
             <div class="background-image">
                 @if ($settings['staff_background_image'] ?? '')
                     <img src="{{ public_path('storage/').$settings['staff_background_image'] }}" class="background_image" height="140" width="280" alt="">
-                    
+
                 @endif
             </div>
         @endif
-        
-        
+
+
     </div>
     @endforeach
 </body>

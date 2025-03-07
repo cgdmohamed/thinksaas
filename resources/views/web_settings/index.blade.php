@@ -150,7 +150,7 @@
                                                     @else
                                                         <input type="checkbox" class="form-check-input" name="display_school_logos" value="1" checked>{{ __('display_school_logos') }}
                                                     @endif
-                                                    
+
                                                 </label>
                                             </div>
                                         </div>
@@ -165,7 +165,7 @@
                                                     @else
                                                         <input type="checkbox" class="form-check-input" name="display_counters" value="1" checked>{{ __('display_counters') }}
                                                     @endif
-                                                    
+
                                                 </label>
                                             </div>
                                         </div>
@@ -253,7 +253,7 @@
                                                     </label>
                                                 </div>
                                             @endif
-                                            
+
                                         </div>
                                     </div>
                                     <div class="form-group col-sm-12 col-md-12">
@@ -353,8 +353,8 @@
         function restore_default_color(value)
         {
             if (value == 1) {
-                $('#theme_primary_color').val('#56CC99');
-                $('.theme_primary_color').asColorPicker('val', '#56CC99');
+                $('#theme_primary_color').val('#3b97d2');
+                $('.theme_primary_color').asColorPicker('val', '#3b97d2');
             }
 
             if (value == 2) {
@@ -373,7 +373,7 @@
                 $('#theme_text_secondary_color').val('#5C788C');
                 $('.theme_text_secondary_color').asColorPicker('val', '#5C788C');
             }
-            
+
         }
     </script>
 @endsection

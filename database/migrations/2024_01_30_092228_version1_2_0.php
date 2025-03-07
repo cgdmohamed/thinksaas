@@ -131,7 +131,7 @@ return new class extends Migration {
         $systemSettings = [
             [
                 'name' => 'hero_title_1',
-                'data' => 'Opt for eSchool Saas 14+ robust features for an enhanced educational experience.',
+                'data' => 'Opt for Thinkhup 14+ robust features for an enhanced educational experience.',
                 'type' => 'text'
             ],
             [
@@ -151,7 +151,7 @@ return new class extends Migration {
             ],
             [
                 'name' => 'about_us_description',
-                'data' => 'eSchool is the pinnacle of school management, offering advanced technology, user-friendly features, and personalized solutions. It simplifies communication, streamlines administrative tasks, and elevates the educational experience for all stakeholders. With eSchool, excellence in education management is guaranteed.',
+                'data' => 'Thinkhup is the pinnacle of school management, offering advanced technology, user-friendly features, and personalized solutions. It simplifies communication, streamlines administrative tasks, and elevates the educational experience for all stakeholders. With Thinkhup, excellence in education management is guaranteed.',
                 'type' => 'text'
             ],
             [
@@ -176,7 +176,7 @@ return new class extends Migration {
             ],
             [
                 'name' => 'theme_primary_color',
-                'data' => '#56cc99',
+                'data' => '#3b97d2',
                 'type' => 'text'
             ],
             [
@@ -201,7 +201,7 @@ return new class extends Migration {
             ],
             [
                 'name' => 'tag_line',
-                'data' => 'Transform School Management With eSchool SaaS',
+                'data' => 'Transform School Management With Thinkhup SaaS',
                 'type' => 'text'
             ],
             [
@@ -211,7 +211,7 @@ return new class extends Migration {
             ],
             [
                 'name' => 'hero_description',
-                'data' => 'Experience the future of education with our eSchool SaaS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
+                'data' => 'Experience the future of education with our Thinkhup SaaS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
                 'type' => 'text'
             ],
         ];
@@ -235,7 +235,7 @@ return new class extends Migration {
             $table->double('amount',64,2)->change();
         });
 
-        // Soft delete school admin if school_id null, Because of super admin has change school admin softdelete old school admin due to many issue has occur like login, forgot password, etc...  
+        // Soft delete school admin if school_id null, Because of super admin has change school admin softdelete old school admin due to many issue has occur like login, forgot password, etc...
         $schools = School::onlyTrashed()->pluck('admin_id')->toArray();
         User::whereIn('id',$schools)->delete();
 

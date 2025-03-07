@@ -1,16 +1,16 @@
 @extends('layouts.home_page.master')
 @section('title')
-    {{ __($type ?? '') }} || 
+    {{ __($type ?? '') }} ||
 @endsection
 @section('content')
 <style>
     :root {
-    --primary-color: {{ $settings['theme_primary_color'] ?? '#56cc99' }};
+    --primary-color: {{ $settings['theme_primary_color'] ?? '#3b97d2' }};
     --secondary-color: {{ $settings['theme_secondary_color'] ?? '#215679' }};
     --secondary-color1: {{ $settings['theme_secondary_color_1'] ?? '#38a3a5' }};
     --primary-background-color: {{ $settings['theme_primary_background_color'] ?? '#f2f5f7' }};
     --text--secondary-color: {{ $settings['theme_text_secondary_color'] ?? '#5c788c' }};
-    
+
 }
 </style>
 <script src="{{ asset('assets/home_page/js/jquery-1-12-4.min.js') }}"></script>
@@ -42,7 +42,7 @@
                     @if (count($faqs))
                         <li>
                             <a href="{{ url('/#faq') }}">{{ __('faqs') }}</a>
-                        </li>    
+                        </li>
                     @endif
                     <li>
                         <a href="{{ url('/#contact-us') }}">{{ __('contact') }}</a>
@@ -53,7 +53,7 @@
                                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
                                     id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                     {{ __('guidance') }}
-                                </a>                                
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                     @foreach ($guidances as $key => $guidance)
                                         <li><a class="dropdown-item" href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
@@ -124,7 +124,7 @@
                     @if (count($faqs))
                         <li>
                             <a href="{{ url('/#faq') }}">{{ __('faqs') }}</a>
-                        </li>    
+                        </li>
                     @endif
                     <li>
                         <a href="{{ url('/#contact-us') }}">{{ __('contact') }}</a>
@@ -135,7 +135,7 @@
                                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
                                     id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                     {{ __('guidance') }}
-                                </a>                                
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                     @foreach ($guidances as $key => $guidance)
                                         <li><a class="dropdown-item" href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>

@@ -59,10 +59,10 @@ class AddSuperAdminSeeder extends Seeder {
             ["name" => "primary_color", "data" => "#3ccb9b", "type" => "text"],
             ["name" => "secondary_color", "data" => "#245a7f", "type" => "text"],
             ["name" => "short_description", "data" => "Creative Learning solution", "type" => "text"],
-            ["name" => "facebook", "data" => "https://www.facebook.com/wrteam.in/", "type" => "text"],
-            ["name" => "instagram", "data" => "https://www.instagram.com/wrteam.in/", "type" => "text"],
-            ["name" => "linkedin", "data" => "https://in.linkedin.com/company/wrteam", "type" => "text"],
-            ["name" => "footer_text", "data" => "<p>&copy;&nbsp;<strong><a href='https://wrteam.in/' target='_blank' rel='noopener noreferrer'>WRTeam</a></strong>. All Rights Reserved</p>", "type" => "text"],
+            ["name" => "facebook", "data" => "https://www.facebook.com/", "type" => "text"],
+            ["name" => "instagram", "data" => "https://www.instagram.com/", "type" => "text"],
+            ["name" => "linkedin", "data" => "https://in.linkedin.com/company/", "type" => "text"],
+            ["name" => "footer_text", "data" => "<p>&copy;&nbsp;<strong><a href='https:/thinkhup.com/' target='_blank' rel='noopener noreferrer'>Thinkhup</a></strong>. All Rights Reserved</p>", "type" => "text"],
             ["name" => "tagline", "data" => "We Provide the best Education", "type" => "text"],
             ["name" => "super_admin_name", "data" => "Super Admin", "type" => "text"],
 
@@ -71,7 +71,7 @@ class AddSuperAdminSeeder extends Seeder {
         $systemSettings = [
             [
                 'name' => 'hero_title_1',
-                'data' => 'Opt for eSchool Saas 14+ robust features for an enhanced educational experience.',
+                'data' => 'Opt for Thinkhup 14+ robust features for an enhanced educational experience.',
                 'type' => 'text'
             ],
             [
@@ -91,7 +91,7 @@ class AddSuperAdminSeeder extends Seeder {
             ],
             [
                 'name' => 'about_us_description',
-                'data' => 'eSchool is the pinnacle of school management, offering advanced technology, user-friendly features, and personalized solutions. It simplifies communication, streamlines administrative tasks, and elevates the educational experience for all stakeholders. With eSchool, excellence in education management is guaranteed.',
+                'data' => 'Thinkhup is the pinnacle of school management, offering advanced technology, user-friendly features, and personalized solutions. It simplifies communication, streamlines administrative tasks, and elevates the educational experience for all stakeholders. With Thinkhup, excellence in education management is guaranteed.',
                 'type' => 'text'
             ],
             [
@@ -116,7 +116,7 @@ class AddSuperAdminSeeder extends Seeder {
             ],
             [
                 'name' => 'theme_primary_color',
-                'data' => '#56cc99',
+                'data' => '#3b97d2',
                 'type' => 'text'
             ],
             [
@@ -141,7 +141,7 @@ class AddSuperAdminSeeder extends Seeder {
             ],
             [
                 'name' => 'tag_line',
-                'data' => 'Transform School Management With eSchool SaaS',
+                'data' => 'Transform School Management With Thinkhup',
                 'type' => 'text'
             ],
             [
@@ -151,7 +151,7 @@ class AddSuperAdminSeeder extends Seeder {
             ],
             [
                 'name' => 'hero_description',
-                'data' => 'Experience the future of education with our eSchool SaaS platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
+                'data' => 'Experience the future of education with our Thinkhup platform. Streamline attendance, assignments, exams, and more. Elevate your school\'s efficiency and engagement.',
                 'type' => 'text'
             ],
             [

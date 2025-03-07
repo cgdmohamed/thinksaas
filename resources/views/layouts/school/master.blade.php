@@ -17,9 +17,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>
-        @yield('title') || 
+        @yield('title') ||
         {{-- {{ config('app.name') }} --}}
-        {{ $schoolSettings['school_name'] ?? 'eSchool - Saas' }}
+        {{ $schoolSettings['school_name'] ?? 'Thinkhup' }}
     </title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('layouts.school.include')

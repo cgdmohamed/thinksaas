@@ -7,9 +7,9 @@
 @section('content')
 <style>
     :root {
-    --primary-color: {{ $settings['theme_primary_color'] ?? '#56cc99' }};
+    --primary-color: {{ $settings['theme_primary_color'] ?? '#3b97d2' }};
     --secondary-color: {{ $settings['theme_secondary_color'] ?? '#215679' }};
-   
+
 }
 </style>
     <div class="content-wrapper">
@@ -25,8 +25,8 @@
                         @if ($upcoming_package)
                             <h3 class="card-title text-danger">{{ __('note') }} : {{ __('if_youve_already_made_payment_for_your_upcoming_plan_changes_or_updates_to_the_current_and_upcoming_plan_will_not_be_permitted') }}</h3>
                         @endif
-                        
-                        <div class="row pricing-table mt-4">
+
+                        <div class="mt-4 row pricing-table">
                             @foreach ($packages as $package)
                                 <div class="col-md-6 col-xl-4 grid-margin stretch-card pricing-card">
                                     <div class="card @if ($package->highlight) border-success ribbon @else border-primary @endif  border pricing-card-body">
@@ -37,25 +37,25 @@
                                                 <span class="package-type-badge prepaid-color">{{ __('prepaid') }}</span>
                                             @endif
                                         @endif
-                                        
-                                        <div class="text-center pricing-card-head mb-2">
+
+                                        <div class="mb-2 text-center pricing-card-head">
                                             <h3>{{ __($package->name) }}</h3>
                                             <p>{{ $package->description }}</p>
-                                            <h1 class="font-weight-normal mb-2"></h1>
+                                            <h1 class="mb-2 font-weight-normal"></h1>
                                             <hr>
                                             <div class="row">
                                                 @if ($package->is_trial == 1)
                                                     <div class="col-sm-12 col-md-12">
                                                         <b>{{ __('package_information') }}</b>
                                                     </div>
-                                                    <div class="col-sm-12 col-md-12 mt-3 text-small">
+                                                    <div class="mt-3 col-sm-12 col-md-12 text-small">
                                                         {{ __('student_limit') }} : {{ $settings['student_limit'] }}
                                                     </div>
 
-                                                    <div class="col-sm-12 col-md-12 mt-1 text-small">
+                                                    <div class="mt-1 col-sm-12 col-md-12 text-small">
                                                         {{ __('staff_limit') }} : {{ $settings['staff_limit'] }}
                                                     </div>
-                                                    <div class="col-sm-12 col-md-12 mt-1 text-small">
+                                                    <div class="mt-1 col-sm-12 col-md-12 text-small">
                                                         {{ $settings['trial_days'] }} / {{ __('days') }}
                                                     </div>
                                                 @elseif($package->type == 0)
@@ -66,10 +66,10 @@
                                                     <div class="col-sm-12 col-md-12">
                                                         <h3> {{ $settings['currency_symbol'] }} {{ $package->charges }}</h3>
                                                     </div>
-                                                    <div class="col-sm-12 col-md-12 mt-3 text-small">
+                                                    <div class="mt-3 col-sm-12 col-md-12 text-small">
                                                         {{ __('student_limit') }} : {{ $package->no_of_students }} / {{ __('staff_limit') }} : {{ $package->no_of_staffs }}
                                                     </div>
-                                                    <div class="col-sm-12 col-md-12 mt-2 text-small">
+                                                    <div class="mt-2 col-sm-12 col-md-12 text-small">
                                                         {{ $package->days }} / {{ __('days') }}
                                                     </div>
                                                 @else
@@ -77,13 +77,13 @@
                                                         <b>{{ __('package_price_information') }}</b>
                                                         <hr>
                                                     </div>
-                                                    <div class="col-sm-12 col-md-12 mt-3 text-small">
+                                                    <div class="mt-3 col-sm-12 col-md-12 text-small">
                                                         <h5>
                                                             {{ __('per_student_charges') }} : {{ $settings['currency_symbol'] }} {{ $package->student_charge }} / {{ __('per_staff_charges') }} : {{ $settings['currency_symbol'] }} {{ $package->staff_charge }}
                                                         </h5>
                                                     </div>
 
-                                                    <div class="col-sm-12 col-md-12 mt-1 text-small">
+                                                    <div class="mt-1 col-sm-12 col-md-12 text-small">
                                                         {{ $package->days }} / {{ __('days') }}
                                                     </div>
                                                 @endif
@@ -94,9 +94,9 @@
                                         <ul class="list-unstyled">
                                             @foreach ($features as $feature)
                                                 @if (in_array($feature->id, $package->package_feature->pluck('feature_id')->toArray()))
-                                                    <li><i class="fa fa-check check mr-2"></i>{{ __($feature->name) }}</li>
+                                                    <li><i class="mr-2 fa fa-check check"></i>{{ __($feature->name) }}</li>
                                                 @else
-                                                    <li><i class="fa fa-times no-feature mr-2"></i><span
+                                                    <li><i class="mr-2 fa fa-times no-feature"></i><span
                                                             class="text-decoration-line-through">{{ __($feature->name) }}</span>
                                                     </li>
                                                 @endif
@@ -105,7 +105,7 @@
                                         @if (!$upcoming_package)
                                             @if ($current_plan)
                                                 @if ($package->id == $current_plan->package_id)
-                                                    <div class="wrapper mb-3">
+                                                    <div class="mb-3 wrapper">
                                                         <a href="#" class="btn disabled @if ($package->highlight) btn-success @else btn-outline-primary @endif btn-block select-plan" data-type="{{ $package->type }}" data-id="{{ $package->id }}">{{ __('current_active_plan') }}</a>
                                                     </div>
 
@@ -115,27 +115,27 @@
                                                     </div>
                                                 @else
                                                     <div class="row">
-                                                        <div class="col-sm-12 col-md-12 mb-3">
+                                                        <div class="mb-3 col-sm-12 col-md-12">
                                                             {{-- Start Immediate plan --}}
                                                             @if ($paymentConfiguration && $package->type == 0)
                                                                 <form action="{{ url('subscriptions/razorpay') }}" class="razorpay-form-{{ $package->id }}" method="POST"> @csrf
                                                                     <input type="hidden" name="package_id" class="package_id_{{ $package->id }}" value="{{ $package->id }}">
                                                                     <input type="hidden" name="amount" class="bill_amount_{{ $package->id }}" value="{{ $package->charges }}">
-        
+
                                                                     <input type="hidden" name="type" class="type_{{ $package->id }}" value="package">
                                                                     <input type="hidden" name="package_type" class="package_type_{{ $package->id }}" value="immediate">
-        
+
                                                                     <input type="hidden" name="razorpay_payment_id" class="razorpay_payment_id" value="">
                                                                     <input type="hidden" name="razorpay_signature" class="razorpay_signature" value="">
                                                                     <input type="hidden" name="razorpay_order_id" class="razorpay_order_id" value="">
-        
+
                                                                     <input type="hidden" name="paymentTransactionId" class="paymentTransactionId" value="">
-        
+
                                                                     <button class="btn btn-theme w-100" id="razorpay-button-{{ $package->id }}">{{ __('update_current_plan') }}</button>
                                                                 </form>
                                                             @else
                                                                 <a href="#" class="btn start-immediate-plan @if ($package->highlight) btn-success @else btn-primary @endif btn-block" data-type="{{ $package->type }}" data-id="{{ $package->id }}">{{ __('update_current_plan') }}</a>
-                                                            @endif                                                   
+                                                            @endif
                                                         </div>
 
                                                         {{-- Set upcoming --}}
@@ -219,7 +219,7 @@
                         subscription_id : $('.subscription_id').val(),
                         feature_id : $('.feature_id').val(),
                         end_date : $('.end_date').val(),
-                        
+
                     },
                     success: function (response) {
                         if (response.data) {
@@ -229,7 +229,7 @@
                                 "key": "{{ $paymentConfiguration->api_key ?? '' }}", // Enter the Key ID generated from the Dashboard
                                 "amount": $('.bill_amount').val() * 100, // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
                                 "currency": "{{ $system_settings['currency_code'] ?? 'INR' }}",
-                                "name": "{{ $system_settings['system_name'] ?? 'eSchool-Saas' }}",
+                                "name": "{{ $system_settings['system_name'] ?? 'Thinkhup' }}",
                                 "description": "Razorpay",
                                 "order_id": order_id,
                                 "handler": function(response) {
@@ -253,10 +253,10 @@
                 });
                 e.preventDefault();
             }
-        }, 100); 
-        
+        }, 100);
+
     });
-</script> 
+</script>
 @endforeach
 
 

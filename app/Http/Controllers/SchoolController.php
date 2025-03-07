@@ -89,7 +89,7 @@ class SchoolController extends Controller {
         } catch (\Exception $e) {
             $demoSchool = 0;
         }
-      
+
         $school_code = date('Y').(($schools->id ?? 0) + 1);
         $settings = $this->cache->getSystemSettings();
 
@@ -106,9 +106,9 @@ class SchoolController extends Controller {
     public function store(Request $request) {
         ResponseService::noAnyPermissionThenRedirect(['schools-create']);
 
-        $fullDomain = $_SERVER['HTTP_HOST']; 
-        $parts = explode('.', $fullDomain); 
-        $subdomain = $parts[0]; 
+        $fullDomain = $_SERVER['HTTP_HOST'];
+        $parts = explode('.', $fullDomain);
+        $subdomain = $parts[0];
         // if($request->domain_type == "default")
         if ($subdomain === $request->domain) {
             ResponseService::errorResponse("This Domain is already in use choose any other Domain name.");
@@ -135,7 +135,7 @@ class SchoolController extends Controller {
             if(!$settings['email_verified']) {
                 ResponseService::validationError('Please contact the administrator to activate the email verification.');
             }
-            
+
             DB::beginTransaction();
 
             $school_data = array(
@@ -152,7 +152,7 @@ class SchoolController extends Controller {
             );
             // Call store function of Schools Repository
             $schoolData = $this->schoolsRepository->create($school_data);
-            
+
 
             $school_name = str_replace('.','_',$request->school_name);
             $database_name = 'eschool_saas_'.$schoolData->id.'_'.strtolower(strtok($school_name," "));
@@ -177,11 +177,11 @@ class SchoolController extends Controller {
             $extraFields = $request->extra_fields;
 
             $extraDetails = array();
-           
+
             if (isset($extraFields) && is_array($extraFields)) {
                 foreach ($extraFields as $fields) {
                     $data = null;
-                    
+
                     if (isset($fields['data'])) {
                         // If the data is an array, JSON encode it
                         if (is_array($fields['data'])) {
@@ -192,16 +192,16 @@ class SchoolController extends Controller {
                                 $data = null;
                             }
                         } else {
-                            
+
                             $data = $fields['data'];
                         }
                     }
-            
+
                     if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
                         $image = UploadService::upload($fields['data'], 'school');
                         $data = $image;
                     }
-            
+
                     // Now add the data to the array
                     $extraDetails[] = array(
                         'school_id'         => $schoolData->id,
@@ -212,7 +212,7 @@ class SchoolController extends Controller {
                 }
             }
 
-            
+
             if (!empty($extraDetails)) {
                 $this->extraSchoolData->createBulk($extraDetails);
             }
@@ -221,7 +221,7 @@ class SchoolController extends Controller {
             $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id,'database_name' => $database_name]);
 
             $schoolService = app(SchoolDataService::class);
-            
+
             DB::statement("CREATE DATABASE {$database_name}");
 
             $schoolService->createDatabaseMigration($schoolData);
@@ -250,9 +250,9 @@ class SchoolController extends Controller {
 
             DB::commit();
             $email_body = $this->replacePlaceholders($request, $user, $settings, $school_code);
-            
+
             $data = [
-                'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'eSchool Saas',
+                'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'Thinkhup Saas',
                 'email'       => $request->school_support_email,
                 'email_body'  => $email_body
             ];
@@ -293,7 +293,7 @@ class SchoolController extends Controller {
             '{super_admin_name}' => $settings['super_admin_name'] ?? 'Super Admin',
             '{support_email}' => $settings['mail_username'] ?? '',
             '{contact}' => $settings['mobile'] ?? '',
-            '{system_name}' => $settings['system_name'] ?? 'eSchool Saas',
+            '{system_name}' => $settings['system_name'] ?? 'Thinkhup Saas',
             '{url}' => url('/'),
             // Add more placeholders as needed
         ];
@@ -395,7 +395,7 @@ class SchoolController extends Controller {
             } else {
                 $tempRow['active_plan'] = '-';
             }
-            
+
             $tempRow['extra_fields'] = $row->extra_school_details;
             foreach ($row->extra_school_details as $key => $field) {
                 $data = '';
@@ -437,7 +437,7 @@ class SchoolController extends Controller {
         }
         try {
             $school_database = School::where('id',$id)->pluck('database_name')->first();
-          
+
             $school_data = array(
                 'name'          => $request->edit_school_name,
                 'address'       => $request->edit_school_address,
@@ -464,8 +464,8 @@ class SchoolController extends Controller {
                 foreach ($extraFields as $fields) {
                     if ($fields['input_type'] == 'file') {
                         if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
-                        
-                            $image = UploadService::upload($fields['data'], 'school');                      
+
+                            $image = UploadService::upload($fields['data'], 'school');
                             $schoolDataArray[] = array(
                                 'id'                => $fields['id'] ?? null, // Handle nullable 'id'
                                 'school_inquiry_id' => null,
@@ -476,14 +476,14 @@ class SchoolController extends Controller {
                         }
                     } else {
                         $data = null;
-                
+
                         // Ensure 'data' is properly formatted
                         if (isset($fields['data'])) {
                             $data = is_array($fields['data'])
                                 ? json_encode($fields['data'], JSON_THROW_ON_ERROR) // Convert arrays to JSON
                                 : $fields['data'];
                         }
-                
+
                         $schoolDataArray[] = array(
                             'id'                => $fields['id'] ?? null, // Handle nullable 'id'
                             'school_inquiry_id' => null,
@@ -494,9 +494,9 @@ class SchoolController extends Controller {
                     }
                 }
                 $this->extraSchoolData->upsert($schoolDataArray, ['id'], ['data', 'updated_at']);
-               
+
             }
-          
+
             DB::setDefaultConnection('school');
             Config::set('database.connections.school.database', $school_database);
             DB::purge('school');
@@ -551,7 +551,7 @@ class SchoolController extends Controller {
                 }
                 SchoolSetting::upsert($schoolSettingData,['name','school_id'],['data','school_id','type']);
                 $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$request->edit_id);
-                
+
                 DB::setDefaultConnection('mysql');
                 Session::forget('school_database_name');
                 Session::flush();
@@ -670,9 +670,9 @@ class SchoolController extends Controller {
                 $users = $this->schoolsRepository->builder()->with("user")->where('id',$request->edit_id)->first();
 
                 $email_body = $this->replacePlaceholders($request, $users->user, $settings, $users->code);
-            
+
                 $data = [
-                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'eSchool Saas',
+                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'Thinkhup Saas',
                     'email'       => $request->edit_admin_email,
                     'email_body'  => $email_body
                     ];
@@ -684,30 +684,30 @@ class SchoolController extends Controller {
                 if (!$users->user->hasVerifiedEmail()) {
                     $users->user->sendEmailVerificationNotification();
                 }
-                
+
                 ResponseService::successResponse('School Admin Re-send Email Successfully');
             }
-            
+
             // Mark the School Admin Email as Verified
             if ($request->manually_verify_email) {
-                
+
                 $users = $this->schoolsRepository->builder()->with("user")->where('id', $request->edit_id)->first();
 
                 // set school admin email as verified in Super Admin
                 if (!$users->user->hasVerifiedEmail()) {
-                    
+
                     DB::connection('mysql')->reconnect();
                     DB::setDefaultConnection('mysql');
                     DB::connection('mysql')->table('users')->where('id', $users->user->id)->update(['email_verified_at' => Carbon::now()]);
                     DB::commit();
                 }
-            
+
                 // set school admin email as verified in School Admin
                 $schoolCode = $users->code;
-                
+
                 if ($schoolCode) {
                     $school = School::on('mysql')->where('code', $schoolCode)->first();
-            
+
                     if ($school) {
                         DB::setDefaultConnection('school');
                         Config::set('database.connections.school.database', $school->database_name);
@@ -722,21 +722,21 @@ class SchoolController extends Controller {
                     // Return a response if the school code is missing
                     return response()->json(['message' => 'Unauthenticated'], 400);
                 }
-            
+
                 // Send a success response after the update
                 ResponseService::successResponse('School Admin Email Manually Verified Successfully');
             }
-            
+
             // Update Two Factor Authentication
 
             $users = $this->schoolsRepository->builder()->with("user")->where('id', $request->edit_id)->first();
-            
+
             if ($request->two_factor_verification != $users->user->two_factor_enabled) {
-              
+
                 if ($users->code) {
                     $school = School::on('mysql')->where('code', $users->code)->first();
                     if ($school) {
-                        
+
                         // Super Admin Database Connection
                         DB::setDefaultConnection('mysql');
                         DB::connection('mysql')->reconnect();
@@ -753,7 +753,7 @@ class SchoolController extends Controller {
                         DB::connection('school')->table('users')->where('id', $users->user->id)->update(['two_factor_enabled' => $request->two_factor_verification]);
 
                         DB::commit();
-                        
+
                         ResponseService::successResponse('Two Factor Authentication Updated Successfully');
                     }
                 } else {
@@ -761,7 +761,7 @@ class SchoolController extends Controller {
                     return response()->json(['message' => 'Unauthenticated'], 400);
                 }
             }
-            
+
             DB::commit();
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
@@ -870,27 +870,27 @@ class SchoolController extends Controller {
                 DB::beginTransaction();
 
                 $school_data = array(
-                    'school_name'       => $request->school_name,        
+                    'school_name'       => $request->school_name,
                     'school_email'      => $request->school_email,
                     'school_phone'      => $request->school_phone,
-                    'school_tagline'    => $request->school_tagline,      
-                    'school_address'    => $request->school_address,      
-                    'date'              => Carbon::now()->format('Y-m-d'), 
+                    'school_tagline'    => $request->school_tagline,
+                    'school_address'    => $request->school_address,
+                    'date'              => Carbon::now()->format('Y-m-d'),
                     'status'            => 0,
                 );
-            
+
                 $schoolData = $this->schoolInquiry->create($school_data);
-              
+
                 $schoolDataArray = [];
-    
+
                 $extraFields = $request->extra_fields;
-    
+
                 $extraDetails = array();
-           
+
                 if (isset($request->extra_fields) && is_array($request->extra_fields)) {
                     foreach ($request->extra_fields as $fields) {
                         $data = null;
-                        
+
                         if (isset($fields['data'])) {
                             // If the data is an array, JSON encode it
                             if (is_array($fields['data'])) {
@@ -901,16 +901,16 @@ class SchoolController extends Controller {
                                     $data = null;
                                 }
                             } else {
-                                
+
                                 $data = $fields['data'];
                             }
                         }
-                
+
                         if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
                             $image = UploadService::upload($fields['data'], 'school');
                             $data = $image;
                         }
-                
+
                         // Now add the data to the array
                         $extraDetails[] = array(
                             'school_inquiry_id' => $schoolData->id,
@@ -921,13 +921,13 @@ class SchoolController extends Controller {
                     }
                 }
 
-                
+
                 if (!empty($extraDetails)) {
                     $this->extraSchoolData->createBulk($extraDetails);
                 }
 
                 DB::commit();
-        
+
                 ResponseService::successResponse(trans('School Inquiry Sent to Admin, wait for Admin Approval to successfully registered.'));
 
             }else{
@@ -963,9 +963,9 @@ class SchoolController extends Controller {
                     'school_id'  => $schoolData->id,
                     'image'      => 'dummy_logo.jpg'
                 );
-               
+
                 $user = $this->userRepository->create($admin_data);
-               
+
                 $schoolDataArray = [];
 
                 $extraFields = $request->extra_fields;
@@ -973,7 +973,7 @@ class SchoolController extends Controller {
                 if (isset($request->extra_fields) && is_array($request->extra_fields)) {
                     foreach ($request->extra_fields as $fields) {
                         $data = null;
-                        
+
                         if (isset($fields['data'])) {
                             // If the data is an array, JSON encode it
                             if (is_array($fields['data'])) {
@@ -984,16 +984,16 @@ class SchoolController extends Controller {
                                     $data = null;
                                 }
                             } else {
-                                
+
                                 $data = $fields['data'];
                             }
                         }
-                
+
                         if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
                             // If the data is an uploaded file, store it as the file's path or name
                             $data = $fields['data']->getClientOriginalName(); // or you can save the file and store its path
                         }
-                
+
                         // Now add the data to the array
                         $extraDetails[] = array(
                             'school_inquiry_id' => null,
@@ -1004,31 +1004,31 @@ class SchoolController extends Controller {
                     }
                 }
 
-                
+
                 if (!empty($extraDetails)) {
                     $this->extraSchoolData->createBulk($extraDetails);
                 }
 
                 $school_name = str_replace('.','_',$request->school_name);
                 $database_name = 'eschool_saas_'.$schoolData->id.'_'.strtolower(strtok($school_name," "));
-              
+
                 $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id, 'database_name' => $database_name]);
                 $schoolService = app(SchoolDataService::class);
-               
+
                 DB::statement("CREATE DATABASE {$database_name}");
                 $schoolService->createDatabaseMigration($schoolData);
                 $schoolService->preSettingsSetup($schoolData);
-               
+
                 if ($request->trial_package) {
-                   
+
                     $this->subscriptionService->createSubscription($request->trial_package, $schoolData->id, null, 1);
                     $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$schoolData->id);
                 }
-               
+
                 $settings = $this->cache->getSystemSettings();
                 $email_body = $this->replacePlaceholders($request, $user, $settings, $school_code);
                 $data = [
-                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'eSchool Saas',
+                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'Thinkhup Saas',
                     'email'       => $request->school_email,
                     'email_body'  => $email_body
                 ];
@@ -1067,7 +1067,7 @@ class SchoolController extends Controller {
     public function sendMail(Request $request)
     {
         ResponseService::noAnyPermissionThenRedirect(['custom-school-email']);
-        
+
         $request->validate([
             'subject' => 'required',
             'school_id' => 'required',
@@ -1075,7 +1075,7 @@ class SchoolController extends Controller {
         ]);
 
         try {
-            
+
             foreach ($request->school_id as $key => $school_id) {
                 $this->sendCustomEmail($school_id, $request->description, $request->subject);
             }
@@ -1099,7 +1099,7 @@ class SchoolController extends Controller {
                 '{school_admin_email}' => $school->user->email,
                 '{code}' => $school->code,
                 '{school_admin_mobile}' => $school->user->mobile,
-                '{system_name}' => $systemSettings['system_name'] ?? 'eSchool-SaaS',
+                '{system_name}' => $systemSettings['system_name'] ?? 'thinkhup-SaaS',
                 '{support_email}' => $systemSettings['mail_send_from'] ?? 'example@gmail.com',
                 '{support_contact}' => $systemSettings['mobile'] ?? '[+xx xxxxxxxxxx]',
                 '{website}' => url('/'),
@@ -1125,7 +1125,7 @@ class SchoolController extends Controller {
                 ResponseService::errorResponse(trans('error_occur'));
             }
         }
-        
+
     }
 
     public function createDemoSchool()
@@ -1133,7 +1133,7 @@ class SchoolController extends Controller {
         try {
             DB::beginTransaction();
 
-            $schools = $this->schoolsRepository->builder()->latest()->first();        
+            $schools = $this->schoolsRepository->builder()->latest()->first();
             $school_code = date('Y').(($schools->id ?? 0) + 1);
             $settings = $this->cache->getSystemSettings();
             $prefix = $settings['school_prefix'] ?? 'SCH';
@@ -1201,7 +1201,7 @@ class SchoolController extends Controller {
 
     public function schoolInquiryIndex() {
         ResponseService::noPermissionThenRedirect('schools-list');
-        
+
         $baseUrl = url('/');
         // Remove the scheme (http:// or https://)
         $baseUrlWithoutScheme = preg_replace("(^https?://)", "", $baseUrl);
@@ -1230,7 +1230,7 @@ class SchoolController extends Controller {
             $query->where('school_name', 'LIKE', "%$search%")
                 ->orWhere('school_address', 'LIKE', "%$search%")
                 ->orWhere('school_phone', 'LIKE', "%$search%")
-                ->orWhere('school_email', 'LIKE', "%$search%")   
+                ->orWhere('school_email', 'LIKE', "%$search%")
                 ->orWhere('school_tagline', 'LIKE', "%$search%")
                 ->orWhere('date', 'LIKE', "%$search%")
                 ->orWhere('status', 'LIKE', "%$search%");
@@ -1244,10 +1244,10 @@ class SchoolController extends Controller {
             $dateRange = explode(' - ', $date);
             $startDate = Carbon::parse($dateRange[0])->startOfDay();
             $endDate = Carbon::parse($dateRange[1])->endOfDay();
-            
+
             $sql->whereBetween('date', [$startDate, $endDate]);
         }
-        
+
         $total = $sql->count();
 
         $sql->orderBy($sort, $order)->skip($offset)->take($limit);
@@ -1334,7 +1334,7 @@ class SchoolController extends Controller {
                 );
                 // Call store function of Schools Repository
                 $schoolData = $this->schoolsRepository->create($school_data);
-                
+
 
                 $school_name = str_replace('.','_',$request->school_name);
                 $database_name = 'eschool_saas_'.$schoolData->id.'_'.strtolower(strtok($school_name," "));
@@ -1355,32 +1355,32 @@ class SchoolController extends Controller {
                 // Update Admin id to School Data
                 $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id,'database_name' => $database_name]);
 
-               
+
                 $schoolDataArray = [];
 
                 $extraFields = $request->extra_fields;
 
-                
+
                 if(isset($extraFields)){
                     foreach ($extraFields as $field) {
                         // Validate the required fields before saving
                         if (isset($field['form_field_id']) && isset($field['data'])) {
-    
+
                             $schoolDataArray = array(
                                 'school_inquiry_id' => null,
                                 'school_id'         => $schoolData->id,
                                 'form_field_id'     => $field['form_field_id'],
                                 'data'              => $field['data']
                             );
-        
+
                             $this->extraSchoolData->update($field['id'], $schoolDataArray);
-                        
+
                         }
                     }
                 }
-              
 
-                
+
+
                 DB::statement("CREATE DATABASE {$database_name}");
 
                 $schoolService->createDatabaseMigration($schoolData);
@@ -1409,9 +1409,9 @@ class SchoolController extends Controller {
 
                 DB::commit();
                 $email_body = $this->replacePlaceholders($request, $user, $settings, $school_code);
-                
+
                 $data = [
-                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'eSchool Saas',
+                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'Thinkhup Saas',
                     'email'       => $request->school_support_email,
                     'email_body'  => $email_body
                 ];
@@ -1423,7 +1423,7 @@ class SchoolController extends Controller {
                 if (!$user->hasVerifiedEmail()) {
                     $user->sendEmailVerificationNotification();
                 }
-                 
+
                 $schoolService->switchToMainDatabase();
 
 
@@ -1434,9 +1434,9 @@ class SchoolController extends Controller {
             }elseif($request->status == 2){
 
                 $email_body = $this->replaceEmailPlaceholders($request, $settings);
-                
+
                 $data = [
-                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'eSchool Saas',
+                    'subject'     => 'Welcome to ' . $settings['system_name'] ?? 'Thinkhup Saas',
                     'email'       => $request->school_support_email,
                     'email_body'  => $email_body
                 ];
@@ -1453,7 +1453,7 @@ class SchoolController extends Controller {
             }else{
                 ResponseService::successResponse('Data Stored Successfully');
             }
-            
+
 
 
         } catch (Throwable $e) {
@@ -1477,7 +1477,7 @@ class SchoolController extends Controller {
             '{super_admin_name}' => $settings['super_admin_name'] ?? 'Super Admin',
             '{support_email}' => $settings['mail_username'] ?? '',
             '{contact}' => $settings['mobile'] ?? '',
-            '{system_name}' => $settings['system_name'] ?? 'eSchool Saas',
+            '{system_name}' => $settings['system_name'] ?? 'Thinkhup Saas',
             '{url}' => url('/'),
         ];
 

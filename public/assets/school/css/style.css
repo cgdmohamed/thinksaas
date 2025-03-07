@@ -206,10 +206,15 @@ a {
   color: #29363f;
 }
 
+.navbar .dropdown-toggle:hover{
+    color: var(--primary-color);
+}
+
 .navbar .dropdown-toggle:focus {
   background-color: transparent !important;
   border: none;
   box-shadow: none;
+  color: var(--primary-color);
 }
 
 .navbar hr {

@@ -111,21 +111,21 @@ class LoginController extends Controller
                 // Optionally, log in the user explicitly
                 Auth::loginUsingId(Auth::guard('web')->id());
                 $user = Auth::guard('web')->user();
-                
+
                 // Web Login in Student/Guardian Not Allowed (only App Login)
                 if($user->hasRole('Student') || $user->hasRole('Guardian')) {
                     Auth::logout();
                     return redirect()->route('login')->with('error', 'You are not authorized to access Web Login (Student/Guardian)');
                 }
-            
+
                 // Set custom session data
                 session(['user_id' => $user->id]);
                 session(['user_email' => $user->email]);
-                
+
                 session()->save();
 
                 Auth::login($user);
-                
+
                 Session::put('school_database_name', $school->database_name);
 
                 $data = DB::table('users')->where('email',$request->email)->first();
@@ -147,7 +147,7 @@ class LoginController extends Controller
                     }
                 }
 
-                
+
                 // return redirect()->intended('/dashboard');
             } else {
                 \Log::error('Login attempt failed in school database. Email: ' . $request->email);
@@ -176,7 +176,7 @@ class LoginController extends Controller
 
                 if ($data) {
                     if (( $data->two_factor_secret == null || $data->two_factor_expires_at == null ) && $data->two_factor_enabled == 1 && !Auth::user()->hasRole('Teacher') && $request->email != 'superadmin@gmail.com' && !env('DEMO_MODE')) {
-                       
+
                         $twoFACode = $this->generate2FACode();
                         $settings = $this->cache->getSystemSettings();
                         $user = Auth::user();
@@ -209,12 +209,12 @@ class LoginController extends Controller
         // Define the characters to be used in the code
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         $code = '';
-        
+
         // Loop through and generate each character
         for ($i = 0; $i < $length; $i++) {
             $code .= $characters[rand(0, strlen($characters) - 1)];
         }
-        
+
         return $code;
     }
 
@@ -259,17 +259,17 @@ class LoginController extends Controller
         $placeholders = [
             '{school_admin_name}' => $user->full_name,
             '{school_name}' => $school_name,
-        
+
             '{super_admin_name}' => $settings['super_admin_name'] ?? 'Super Admin',
             '{support_email}' => $settings['mail_send_from'] ?? 'example@gmail.com',
             '{support_contact}' => $systemSettings['mobile'] ?? '9876543210',
-            '{system_name}' => $settings['system_name'] ?? 'eSchool Saas',
+            '{system_name}' => $settings['system_name'] ?? 'Thinkhup Saas',
             '{expiration_time}' => '5',
             '{url}' => url('/'),
-        
+
             '{verification_code}' => $twoFACode,
         ];
-        
+
         // Replace the placeholders in the template content
         foreach ($placeholders as $placeholder => $replacement) {
             $templateContent = str_replace($placeholder, $replacement, $templateContent);
@@ -277,5 +277,5 @@ class LoginController extends Controller
 
         return $templateContent;
     }
-    
+
 }

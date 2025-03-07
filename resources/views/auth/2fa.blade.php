@@ -26,12 +26,12 @@
 
     <style>
         :root {
-        --primary-color: {{ $systemSettings['theme_primary_color'] ?? '#56cc99' }};
+        --primary-color: {{ $systemSettings['theme_primary_color'] ?? '#3b97d2' }};
         --secondary-color: {{ $systemSettings['theme_secondary_color'] ?? '#215679' }};
         --secondary-color1: {{ $systemSettings['theme_secondary_color_1'] ?? '#38a3a5' }};
         --primary-background-color: {{ $systemSettings['theme_primary_background_color'] ?? '#f2f5f7' }};
         --text--secondary-color: {{ $systemSettings['theme_text_secondary_color'] ?? '#5c788c' }};
-        
+
     }
     .modal .modal-dialog {
         margin-top: unset !important;
@@ -52,7 +52,7 @@
                         <div class="auth-form-light rounded-lg text-left p-5">
                             <div class="brand-logo text-center">
                                 @if ($schoolSettings['horizontal_logo'] ?? '')
-                                    <img class="img-fluid w-25" src="{{ $schoolSettings['horizontal_logo'] ?? '' }}" alt="logo">    
+                                    <img class="img-fluid w-25" src="{{ $schoolSettings['horizontal_logo'] ?? '' }}" alt="logo">
                                 @elseif($systemSettings['login_page_logo'] ?? $systemSettings['horizontal_logo'] ?? '')
                                     <img class="img-fluid w-25" src="{{ $systemSettings['login_page_logo'] ?? $systemSettings['horizontal_logo'] ?? '' }}" alt="logo">
                                 @else
@@ -122,7 +122,7 @@
     <script src="{{ asset('/assets/js/custom/common.js') }}"></script>
     <script src="{{ asset('/assets/js/sweetalert2.all.min.js') }}"></script>
     <script src="{{ asset('/assets/js/custom/function.js') }}"></script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>

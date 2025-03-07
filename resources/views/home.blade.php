@@ -3,12 +3,12 @@
 @section('content')
 <style>
     :root {
-    --primary-color: {{ $settings['theme_primary_color'] ?? '#56cc99' }};
+    --primary-color: {{ $settings['theme_primary_color'] ?? '#3b97d2' }};
     --secondary-color: {{ $settings['theme_secondary_color'] ?? '#215679' }};
     --secondary-color1: {{ $settings['theme_secondary_color_1'] ?? '#38a3a5' }};
     --primary-background-color: {{ $settings['theme_primary_background_color'] ?? '#f2f5f7' }};
     --text--secondary-color: {{ $settings['theme_text_secondary_color'] ?? '#5c788c' }};
-    
+
 }
 </style>
 <script src="{{ asset('assets/home_page/js/jquery-1-12-4.min.js') }}"></script>
@@ -41,7 +41,7 @@
                     @if (count($faqs))
                         <li>
                             <a href="#faq">{{ __('faqs') }}</a>
-                        </li>    
+                        </li>
                     @endif
                     <li>
                         <a href="#contact-us">{{ __('contact') }}</a>
@@ -52,7 +52,7 @@
                                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
                                     id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                     {{ __('guidance') }}
-                                </a>                                
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                     @foreach ($guidances as $key => $guidance)
                                         <li><a class="dropdown-item" href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
@@ -124,7 +124,7 @@
                     @if (count($faqs))
                         <li>
                             <a href="#faq">{{ __('faqs') }}</a>
-                        </li>    
+                        </li>
                     @endif
                     <li>
                         <a href="#contact-us">{{ __('contact') }}</a>
@@ -135,7 +135,7 @@
                                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
                                     id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                     {{ __('guidance') }}
-                                </a>                                
+                                </a>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                                     @foreach ($guidances as $key => $guidance)
                                         <li><a class="dropdown-item" href="{{ $guidance->link }}">{{ $guidance->name }}</a></li>
@@ -187,17 +187,17 @@
                     <div class="row">
                         <div class="col-md-12 col-lg-6">
                             <div class="flex_column_start">
-                                <span class="commonTitle">{{ $settings['system_name']  ?? 'eSchool SaaS' }}</span>
+                                <span class="commonTitle">{{ $settings['system_name']  ?? 'Thinkhup' }}</span>
                                 <span class="commonDesc">
                                     {{ $settings['tag_line'] }}
                                 </span>
                                 <span class="commonText">
                                     {{ $settings['hero_description'] }}</span>
                                 <div class="d-flex">
-                                    <button class="commonBtn" style="margin-right: 40px" data-bs-toggle="modal" data-bs-target="#staticBackdrop">{{ __('register_your_school') }}</button>                           
+                                    <button class="commonBtn" style="margin-right: 40px" data-bs-toggle="modal" data-bs-target="#staticBackdrop">{{ __('register_your_school') }}</button>
                                     @if ($isDemoSchool == 1)
                                         <a href="{{ $demoSchoolUrl ?? url('/') }}" target="_blank" class="commonBtn">{{ __('demo_school') }}</a>
-                                    @endif   
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -214,8 +214,8 @@
                                 </div>
                                 <div class="textWrapper">
                                     <span>{{ $settings['hero_title_1'] }}</span>
-                                </div>    
-                                
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -228,7 +228,7 @@
     </section>
     <!-- heroSection ends here  -->
 
-    <section class="features commonMT container" id="features">
+    <section class="container features commonMT" id="features">
         <div class="row">
             <div class="col-12">
                 <div class="sectionTitle">
@@ -258,7 +258,7 @@
                                 </div>
                             </div>
                         @endif
-                        
+
                     @endforeach
                     <div class="col-12">
                         <button class="commonBtn view-more-feature" value="1">{{ __('view_more_features') }}</button>
@@ -270,7 +270,7 @@
     <!-- features ends here  -->
 
     {{-- @if ($settings['display_school_logos'] ?? '1')
-        <section class="swiperSect container commonMT">
+        <section class="container swiperSect commonMT">
             <div class="row">
                 <div class="col-12">
                     <div class="commonSlider">
@@ -294,7 +294,7 @@
     @endif --}}
     <!-- swiperSect ends here  -->
     {{-- @if ($settings['display_counters'] ?? '1')
-        <section class="counterSect commonMT container">
+        <section class="container counterSect commonMT">
             <div class="">
                 <div class="row counterBG">
                     <div class="col-4 col-sm-4 col-md-4 col-lg-4">
@@ -319,15 +319,15 @@
             </div>
         </section>
     @endif --}}
-    
+
     <!-- School logos section starts here -->
     @if ($settings['display_school_logos'] ?? '1')
         <section class="container">
-            <div class="row py-3">
+            <div class="py-3 row">
                 <div class="owl-carousel owl-theme school-logo-owl-carousel">
                     @foreach ($allSchools as $key => $school)
                     <div class="item">
-                        <div class="card p-3 d-flex justify-content-center align-items-center">
+                        <div class="p-3 card d-flex justify-content-center align-items-center">
                             <img src="{{ $school->logo }}" style="border-radius: 50%; width: 100px; height: 100px;" alt="" onerror="onErrorImage(event)">
                             <h6 class="mt-3">{{  Str::limit($school->name, 25, ' ...') }}</h6>
                         </div>
@@ -336,7 +336,7 @@
                 </div>
             </div>
         </section>
-    @endif 
+    @endif
   <!-- School logos section ends here -->
 
     @foreach ($featureSections as $key => $section)
@@ -350,7 +350,7 @@
                         <span>
                             {{ $section->heading }}
                         </span>
-    
+
                     </div>
                 </div>
                 <div class="col-12 tabsContainer " style="word-break: break-word;">
@@ -368,19 +368,19 @@
                                     @endforeach
                                 </div>
                             </div>
-    
+
                         </div>
-    
+
                         <div class="col-lg-6 contentWrapper">
                             <div class="content-container">
                                 @foreach ($section->feature_section_list as $section_feature)
                                     <div class="content tab-{{ $section_feature->id }}-{{ $key }}">
                                         <img src="{{ $section_feature->image }}" alt="">
-                                    </div>    
+                                    </div>
                                 @endforeach
                             </div>
                         </div>
-    
+
                     </div>
                 </div>
             </div>
@@ -397,7 +397,7 @@
                             <span>
                                 {{ $section->heading }}
                             </span>
-    
+
                         </div>
                     </div>
                     <div class="col-12 tabsContainer">
@@ -407,11 +407,11 @@
                                     @foreach ($section->feature_section_list as $section_feature)
                                         <div class="content tab-{{ $section_feature->id }}-{{ $key }}">
                                             <img src="{{ $section_feature->image }}" alt="">
-                                        </div>    
+                                        </div>
                                     @endforeach
                                 </div>
                             </div>
-    
+
                             <div class="col-lg-6 tabsMainWrapper">
                                 <div class="tabsWrapper">
                                     <div class="tabs">
@@ -425,19 +425,19 @@
                                         @endforeach
                                     </div>
                                 </div>
-    
+
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-    
+
         </section>
 
         @endif
     @endforeach
 
-    <section class="whyBest container commonMT" id="about-us">
+    <section class="container whyBest commonMT" id="about-us">
         <div class="row">
             <div class="col-lg-6">
                 <div class="whyBestTextWrapper">
@@ -474,15 +474,15 @@
 
                     </div>
                 </div>
-                <div class="col-12 swiperWrapper h-full">
+                <div class="h-full col-12 swiperWrapper">
                     <div class="commonSlider">
                         <div class="slider-content owl-carousel">
 
                             @foreach ($packages as $package)
                                 @if ($package->highlight)
-                                <div class="swiperDataWrapper flex items-stretch h-full">
-                                    <div class="pricingBox premium flex flex-col justify-between h-full">
-                                        <div class="startUpWrapper flex flex-col h-full">
+                                <div class="flex items-stretch h-full swiperDataWrapper">
+                                    <div class="flex flex-col justify-between h-full pricingBox premium">
+                                        <div class="flex flex-col h-full startUpWrapper">
                                             @if ($package->is_trial == 1)
                                                 <span class="badge postpaid">{{ __('free') }}</span>
                                             @else
@@ -492,7 +492,7 @@
                                                     <span class="badge prepaid">{{ __('prepaid') }}</span>
                                                 @endif
                                             @endif
-                                            
+
                                             <div class="textDiv">
                                                 <span class="title">{{ __($package->name) }}</span>
                                                 @if ($package->is_trial == 1)
@@ -613,7 +613,7 @@
     <!-- pricing ends here  -->
 
     @if (isset($settings['custom_package_status']) && $settings['custom_package_status'])
-        <section class="customPack container commonMT">
+        <section class="container customPack commonMT">
             <div class="wrapper">
                 <div class="row">
                     <div class="col-sm-12 col-md-6 col-lg-6">
@@ -626,12 +626,12 @@
                     </div>
 
                     <div class="col-sm-12 col-md-6 col-lg-6">
-                        <a href="#contact-us" class="commonBtn text-center">{{ __('get_in_touch') }}</a>
+                        <a href="#contact-us" class="text-center commonBtn">{{ __('get_in_touch') }}</a>
                     </div>
 
                 </div>
             </div>
-        </section>            
+        </section>
     @endif
 
     @if (count($faqs))
@@ -665,7 +665,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                </div>  
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -688,7 +688,7 @@
                     <div class="col-12">
                         <div class="row wrapper">
                             <div class="col-lg-6">
-                                <form action="{{ url('contact') }}" method="post" role="form" class="php-email-form mb-5 create-form-with-captcha">
+                                <form action="{{ url('contact') }}" method="post" role="form" class="mb-5 php-email-form create-form-with-captcha">
                                     @csrf
                                     <div class="card">
                                         <div>
@@ -704,7 +704,7 @@
                                         @if (config('services.recaptcha.key') ?? '')
                                             <div>
                                                 <div class="g-recaptcha" data-sitekey={{config('services.recaptcha.key')}}></div>
-                                            </div>    
+                                            </div>
                                         @endif
                                         <div>
                                             <button class="commonBtn">{{ __('send') }}</button>
@@ -755,7 +755,7 @@
 
     </section>
 
-    <section class="ourApp container commonMT">
+    <section class="container ourApp lead commonMT">
         <div class="row">
             <div class="col-lg-6">
                 <img src="{{ $settings['download_our_app_image'] ?? asset('assets/landing_page_images/ourApp.png') }}" class="ourAppImg" alt="">
@@ -843,7 +843,7 @@
         </script>
     @endforeach
     <script>
-        $('.redirect-login').click(function (e) { 
+        $('.redirect-login').click(function (e) {
             e.preventDefault();
             window.location.href = "{{ url('login') }}"
         });

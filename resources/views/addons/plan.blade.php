@@ -19,11 +19,11 @@
                         <div class="row pricing-table">
                             {{-- @foreach ($addons as $addon)
                                 <div class="col-md-6 col-xl-3 grid-margin stretch-card pricing-card">
-                                    <div class="card border-primary ribbon  border pricing-card-body">
-                                        <div class="text-center pricing-card-head mb-2 text-center">
+                                    <div class="border card border-primary ribbon pricing-card-body">
+                                        <div class="mb-2 text-center pricing-card-head">
                                             <h4>{{ $addon->name }}</h4>
                                             <p>{{ __('price') }} : {{ $settings['currency_symbol'] ?? null }} {{ number_format($addon->price, 2) }} </p>
-                                            <h1 class="font-weight-normal mb-2"></h1>
+                                            <h1 class="mb-2 font-weight-normal"></h1>
                                             <hr>
                                             <div class="text-center">
                                                 {{ $addon->feature->name }}
@@ -36,7 +36,7 @@
                                             @else
                                                 <button data-id="{{ $addon->id }}" class="btn btn-outline-success add-addon btn-block">{{ __('add') }}</button>
                                             @endif
-                                            
+
                                         </div>
 
                                     </div>
@@ -46,12 +46,12 @@
                             @foreach ($addons as $addon)
                                 @if (in_array($addon->feature_id, $features))
                                     <div class="col-md-6 col-xl-3 grid-margin stretch-card pricing-card">
-                                        <div class="card addon-border-primary border-primary border pricing-card-body">
+                                        <div class="border card addon-border-primary border-primary pricing-card-body">
                                             <div class="addon-ribbon text-uppercase">{{ __('added') }}</div>
-                                            <div class="text-center pricing-card-head mb-2 text-center">
+                                            <div class="mb-2 text-center pricing-card-head">
                                                 <h4>{{ $addon->name }}</h4>
                                                 <p>{{ __('price') }} : {{ $settings['currency_symbol'] ?? null }} {{ number_format($addon->price, 2) }} </p>
-                                                <h1 class="font-weight-normal mb-2"></h1>
+                                                <h1 class="mb-2 font-weight-normal"></h1>
                                                 <hr>
                                                 <div class="text-center">
                                                     {{ __($addon->feature->name) }}
@@ -65,11 +65,11 @@
                                     </div>
                                 @else
                                     <div class="col-md-6 col-xl-3 grid-margin stretch-card pricing-card">
-                                        <div class="card border-primary border pricing-card-body">
-                                            <div class="text-center pricing-card-head mb-2 text-center">
+                                        <div class="border card border-primary pricing-card-body">
+                                            <div class="mb-2 text-center pricing-card-head">
                                                 <h4>{{ $addon->name }}</h4>
                                                 <p>{{ __('price') }} : {{ $settings['currency_symbol'] ?? null }} {{ number_format($addon->price, 2) }} </p>
-                                                <h1 class="font-weight-normal mb-2"></h1>
+                                                <h1 class="mb-2 font-weight-normal"></h1>
                                                 <hr>
                                                 <div class="text-center">
                                                     {{ $addon->feature->name }}
@@ -100,12 +100,12 @@
                                                             <button class="btn btn-outline-success w-100" id="razorpay-button-{{ $addon->id }}">{{ __('add') }}</button>
                                                         </form>
                                                     @else
-                                                        
+
                                                         <button data-id="{{ $addon->id }}" data-type="{{ $subscription->package_type }}" class="btn btn-outline-success add-addon btn-block">{{ __('add') }}</button>
                                                     @endif
                                                 @endif
 
-                                                
+
                                             </div>
                                         </div>
                                     </div>
@@ -128,7 +128,7 @@
         // Add the event listener for the button to initiate the payment
         setTimeout(() => {
             document.getElementById('razorpay-button-{{ $addon->id }}').onclick = function(e) {
-                
+
                 let baseUrl = window.location.origin;
                 var order_id = '';
                 var paymentTransactionId = '';
@@ -147,7 +147,7 @@
                         subscription_id : $('.subscription_id').val(),
                         feature_id : $('.feature_id-{{ $addon->id }}').val(),
                         end_date : $('.end_date').val(),
-                        
+
                     },
                     success: function (response) {
                         if (response.data) {
@@ -157,7 +157,7 @@
                                 "key": "{{ $paymentConfiguration->api_key ?? '' }}", // Enter the Key ID generated from the Dashboard
                                 "amount": $('.bill_amount').val() * 100, // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
                                 "currency": "{{ $system_settings['currency_code'] ?? 'INR' }}",
-                                "name": "{{ $system_settings['system_name'] ?? 'eSchool-Saas' }}",
+                                "name": "{{ $system_settings['system_name'] ?? 'Thinkhup' }}",
                                 "description": "Razorpay",
                                 "order_id": order_id,
                                 "handler": function(response) {
@@ -181,8 +181,8 @@
                 });
                 e.preventDefault();
             }
-        }, 100); 
-        
+        }, 100);
+
     });
 </script>
 @endforeach

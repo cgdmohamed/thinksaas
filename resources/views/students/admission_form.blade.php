@@ -21,7 +21,7 @@
         {
             width: 100%;
         }
-        .school-info th, .school-info td 
+        .school-info th, .school-info td
         {
             padding: 2px 5px;
         }
@@ -51,12 +51,12 @@
             margin: 0rem 2rem;
         }
         .student-section {
-            
+
         }
         .section {
             margin-top: 0.5rem;
         }
-        
+
         .label {
             width: 5rem;
         }
@@ -66,8 +66,8 @@
         }
         .section .col-line {
             display: inline-block;
-            
-            
+
+
         }
         .line {
             border-bottom: 1px solid black;
@@ -100,7 +100,7 @@
             width: 7rem;
         }
         .tr-bottom {
-            
+
         }
     </style>
 </head>
@@ -109,7 +109,7 @@
         <div class="header">
             <table class="full-table-width school-info">
                 <tr>
-                    <th class="text-left school-name">{{ $schoolSettings['school_name'] ?? 'eSchool' }}</th>
+                    <th class="text-left school-name">{{ $schoolSettings['school_name'] ?? 'Thinkhup' }}</th>
                     <th class="text-right" rowspan="3">
                         @if ($settings['horizontal_logo'] ?? '')
                             <img height="50" src="{{ public_path('storage/') . $settings['horizontal_logo'] }}" alt="">
@@ -127,7 +127,7 @@
                 </tr>
             </table>
         </div>
-        <div class="section-heading text-center">
+        <div class="text-center section-heading">
             STUDENT REGISTRATION FORM
         </div>
         <div class="main-body">
@@ -145,18 +145,18 @@
                         </ul>
                     </td>
 
-                    <td class="photo text-center">
+                    <td class="text-center photo">
                         Student photo
                     </td>
-                    <td class="photo text-center">
+                    <td class="text-center photo">
                         Guardian photo
                     </td>
                 </tr>
-                
-            </table>
-            
 
-            <div class="student-detail section-heading text-center">
+            </table>
+
+
+            <div class="text-center student-detail section-heading">
                 STUDENT DETAILS
             </div>
 
@@ -200,14 +200,14 @@
                     <tr>
                         <td></td>
 
-                        <td class="text-small text-center">D</td>
-                        <td class="text-small text-center">D</td>
-                        <td class="text-small text-center">M</td>
-                        <td class="text-small text-center">M</td>
-                        <td class="text-small text-center">Y</td>
-                        <td class="text-small text-center">Y</td>
-                        <td class="text-small text-center">Y</td>
-                        <td class="text-small text-center">Y</td>
+                        <td class="text-center text-small">D</td>
+                        <td class="text-center text-small">D</td>
+                        <td class="text-center text-small">M</td>
+                        <td class="text-center text-small">M</td>
+                        <td class="text-center text-small">Y</td>
+                        <td class="text-center text-small">Y</td>
+                        <td class="text-center text-small">Y</td>
+                        <td class="text-center text-small">Y</td>
 
                         <td colspan="5"></td>
                     </tr>
@@ -229,7 +229,7 @@
                     <tr>
                         <td class="line" colspan="2" style="height: 1.5rem;"></td>
                     </tr>
-                    
+
                     <tr>
                         <td style="padding-top: 10px;width: 8rem">Permanent Address *</td>
                         <td class="line"></td>
@@ -240,7 +240,7 @@
                 </table>
             </div>
 
-            <div class="student-detail section-heading text-center">
+            <div class="text-center student-detail section-heading">
                 GUARDIAN DETAILS
             </div>
 

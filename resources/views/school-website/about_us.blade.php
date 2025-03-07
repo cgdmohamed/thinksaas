@@ -27,7 +27,7 @@
                         <div class="flex_column_center">
                             <span class="commonTag"> {{ $schoolSettings['our_mission_section'] ?? 'Our Mission' }} </span>
                             <span class="commonTitle">
-                                {{ $schoolSettings['our_mission_title'] ?? 'Discover Our Mission for eSchool' }}
+                                {{ $schoolSettings['our_mission_title'] ?? 'Discover Our Mission for Thinkhup' }}
                             </span>
 
                             <span class="commonDesc">
@@ -38,7 +38,7 @@
                                     <div class="list col-lg-6">
                                         <img src="{{ asset('assets/school/images/rightIcon.png') }}" alt="">
                                         <span>{{ $item }}</span>
-                                    </div>    
+                                    </div>
                                 @endforeach
                             </div>
 

@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Pinyon%20Script:wght@900&family=Pinyon%20Script&display=swap');
-
 .text-color-dashboard-counter-label {
     color: #585353 !important;
 }
@@ -160,11 +158,8 @@ td img {
     padding: 0 !important;
 }
 
-.border-theme {
-    border: 1px solid var(--theme-color);
-}
 .menu-search {
-    border-radius: 10px;
+    border-radius: 4px;
 }
 
 /* package hover */

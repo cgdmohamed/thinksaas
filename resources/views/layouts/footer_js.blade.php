@@ -94,9 +94,9 @@
     let date_time_format = '{{ $schoolSettings['date_format'] ?? $systemSettings['date_format'] ?? "d-m-Y" }} {{ $schoolSettings['time_format'] ?? $systemSettings['time_format'] ?? "h:i A" }}'.replace('Y', 'YYYY').replace('m', 'MM').replace('d', 'DD').replace('h', 'hh').replace('H', 'HH').replace('i', 'mm').replace('a', 'a').replace('A', 'A');
 
     let time_format = '{{ $schoolSettings['time_format'] ?? $systemSettings['time_format'] ?? "h:i A" }}'.replace('h', 'hh').replace('H', 'HH').replace('i', 'mm').replace('a', 'a').replace('A', 'A');
-    
+
     setTimeout(() => {
-        
+
         $(document).ready(function() {
             var targetNode = document.querySelector('thead');
 
@@ -118,7 +118,7 @@
         });
 
     }, 500);
-    
+
 
     // razorpay-payment-button
     setTimeout(() => {
@@ -147,7 +147,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         // Add the event listener for the button to initiate the payment
         setTimeout(() => {
-            
+
             $('#razorpay-button').click(function (e) {
                 let baseUrl = window.location.origin;
                 var order_id = '';
@@ -167,7 +167,7 @@
                         subscription_id : $('.subscription_id').val(),
                         feature_id : $('.feature_id').val(),
                         end_date : $('.end_date').val(),
-                        
+
                     },
                     success: function (response) {
                         if (response.data) {
@@ -177,7 +177,7 @@
                                 "key": "{{ $paymentConfiguration->api_key ?? '' }}", // Enter the Key ID generated from the Dashboard
                                 "amount": $('.bill_amount').val() * 100, // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
                                 "currency": "{{ $system_settings['currency_code'] ?? 'INR' }}",
-                                "name": "{{ $system_settings['system_name'] ?? 'eSchool-Saas' }}",
+                                "name": "{{ $system_settings['system_name'] ?? 'Thinkhup' }}",
                                 "description": "Razorpay",
                                 "order_id": order_id,
                                 "handler": function(response) {
@@ -199,9 +199,9 @@
                         }
                     }
                 });
-                e.preventDefault(); 
-                
-                
+                e.preventDefault();
+
+
             });
 
         }, 100);
@@ -227,7 +227,7 @@
         //                 subscription_id : $('.subscription_id').val(),
         //                 feature_id : $('.feature_id').val(),
         //                 end_date : $('.end_date').val(),
-                        
+
         //             },
         //             success: function (response) {
         //                 if (response.data) {
@@ -261,8 +261,8 @@
         //         });
         //         e.preventDefault();
         //     }
-        // }, 100); 
-        
+        // }, 100);
+
     });
 
 </script>
@@ -305,7 +305,7 @@
 
     });
 
-    $('.navbar-toggler').click(function (e) { 
+    $('.navbar-toggler').click(function (e) {
         e.preventDefault();
 
         var updatedClasses = $('body').hasClass('sidebar-icon-only');
