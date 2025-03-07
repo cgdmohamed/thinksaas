@@ -13,7 +13,7 @@
         </div>
 
         <div class="row">
-            
+
             @if($demoSchool == 0)
                 <div class="col-lg-12 grid-margin stretch-card">
                     <div class="card bg-light">
@@ -28,14 +28,14 @@
                     </div>
                 </div>
             @endif
-            
+
             <div class="col-lg-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
                         <form class="create-form school-registration-form school-registration-validate" enctype="multipart/form-data" action="{{ route('schools.store') }}" method="POST" novalidate="novalidate">
                             @csrf
-                            <div class="bg-light p-4 mt-4 mb-4">
-                                <h4 class="card-title mb-4">
+                            <div class="p-4 mt-4 mb-4 bg-light">
+                                <h4 class="mb-4 card-title">
                                     {{ __('create') . ' ' . __('schools') }}
                                 </h4>
                                 <div class="row">
@@ -77,7 +77,7 @@
 
                                     <div class="form-group col-sm-12 col-md-6">
                                         <label for="school_domain">{{ __('School Code Prefix')}}</label> <span class="text-danger">*</span>
-                                        <div class="input-group mb-3">
+                                        <div class="mb-3 input-group">
                                             <input type="text" class="form-control school_code_prefix" id="school_code_prefix" name="school_code_prefix" required placeholder="{{ __('prefix') }}" value="{{ $prefix }}">
                                             <div class="input-group-append">
                                                 <input type="text" class="input-group-text text-body school_code" id="basic-addon2" name="school_code" value="{{ $school_code }}" readonly>
@@ -103,10 +103,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">    
+                                <div class="row">
                                     <div class="form-group col-sm-12 col-md-4 defaultDomain" style="display: none">
                                         <label for="school_domain">{{ __('default_domain')}}</label>
-                                        <div class="input-group mb-3">
+                                        <div class="mb-3 input-group">
                                                 <input type="text" class="form-control domain-pattern" name="domain" placeholder="{{ __('domain') }}" aria-label="Recipient's username" aria-describedby="basic-addon2" disabled>
                                             <div class="input-group-append">
                                                 <span class="input-group-text text-body" id="basic-addon2">.{{ $baseUrlWithoutScheme }}</span>
@@ -115,12 +115,12 @@
                                     </div>
                                     <div class="form-group col-sm-12 col-md-4 customDomain" style="display: none">
                                         <label for="school_domain">{{ __('custom_domain')}}</label>
-                                        <div class="input-group mb-3">
+                                        <div class="mb-3 input-group">
                                                 <input type="text" class="form-control domain-pattern" name="domain" placeholder="{{ __('domain') }}" aria-label="Recipient's username" aria-describedby="basic-addon2" disabled>
                                         </div>
                                     </div>
                                 </div>
-                             
+
                                 @if(!empty($extraFields))
                                     <div class="row other-details">
 
@@ -170,9 +170,9 @@
                                                     <label class="d-block">{{$data->name}} @if($data->is_required)
                                                             <span class="text-danger">*</span>
                                                         @endif</label>
-                                                    <div class="d-flex flex-wrap">
+                                                    <div class="flex-wrap d-flex">
                                                         @foreach ($data->default_values as $keyRadio => $value)
-                                                            <div class="form-check mr-3">
+                                                            <div class="mr-3 form-check">
                                                                 <label class="form-check-label">
                                                                     {{ Form::radio('extra_fields['.$key.'][data]', $value, null, ['id' => $fieldName.'_'.$keyRadio, 'class' => 'radio-fields',($data->is_required == 1 ? 'required' : '')]) }}
                                                                     {{$value}}
@@ -186,9 +186,9 @@
                                                     <label class="d-block">{{$data->name}} @if($data->is_required)
                                                             <span class="text-danger">*</span>
                                                         @endif</label>
-                                                    <div class="d-flex flex-wrap">
+                                                    <div class="flex-wrap d-flex">
                                                         @foreach ($data->default_values as $chkKey => $value)
-                                                            <div class="form-check mr-3">
+                                                            <div class="mr-3 form-check">
                                                                 <label class="form-check-label">
                                                                     {{ Form::checkbox('extra_fields['.$key.'][data][]', $value, null, ['id' => $fieldName.'_'.$chkKey, 'class' => 'form-check-input chkclass checkbox-fields',($data->is_required == 1 ? 'required' : '')]) }} {{ $value }}
                                                                 </label>
@@ -218,23 +218,23 @@
                                     </div>
                                 @endif
                             </div>
-                            
-                            <input class="btn btn-theme float-right ml-3" id="create-btn" type="submit"  value={{ __('submit') }} {{ $email_verified == 0 ? 'disabled' : '' }}>
-                            
-                           
-                            <input class="btn btn-secondary float-right" type="reset" value={{ __('reset') }}>
-                            
+
+                            <input class="float-right ml-3 btn btn-theme" id="create-btn" type="submit"  value={{ __('submit') }} {{ $email_verified == 0 ? 'disabled' : '' }}>
+
+
+                            <input class="float-right btn btn-secondary" type="reset" value={{ __('reset') }}>
+
                             <div class="p-4 mt-5 mb-4">
                                 @if($email_verified == 0)
-                                    <div class="alert alert-danger mt-2" role="alert">
-                                        <strong>{{ __('Warning!') }}</strong> 
-                                        {!! __('Warning! Please configure the email settings first to continue with creating the school. :click_here',['click_here' => '<a href="/system-settings/email" >'. __('click_here').'</a>']) !!} 
+                                    <div class="mt-2 alert alert-danger" role="alert">
+                                        <strong>{{ __('Warning!') }}</strong>
+                                        {!! __('Warning! Please configure the email settings first to continue with creating the school. :click_here',['click_here' => '<a href="/system-settings/email" >'. __('click_here').'</a>']) !!}
                                     </div>
                                 @endif
                             </div>
-                            
+
                         </form>
-                        
+
                     </div>
                 </div>
             </div>
@@ -252,8 +252,8 @@
                                 {!! Form::select('package', ['' => 'All'] + $packages, null, ['class' => 'form-control','id' => 'filter_package_id']) !!}
                             </div>
                         </div>
-                        <div class="col-12 text-right">
-                            <b><a href="#" class="table-list-type active mr-2" data-id="0">{{__('all')}}</a></b> | <a href="#" class="ml-2 table-list-type" data-id="1">{{__("Trashed")}}</a>
+                        <div class="text-right col-12">
+                            <b><a href="#" class="mr-2 table-list-type active" data-id="0">{{__('all')}}</a></b> | <a href="#" class="ml-2 table-list-type" data-id="1">{{__("Trashed")}}</a>
                         </div>
                         <table aria-describedby="mydesc" class='table' id='table_list'
                                data-toggle="table" data-url="{{ route('schools.show', 1) }}"
@@ -303,7 +303,7 @@
                 <form id="edit-form" class="pt-3 edit-form" action="{{ url('schools') }}">
                     <input type="hidden" name="edit_id" id="edit_id">
                     <div class="modal-body">
-                        <div class="row">                        
+                        <div class="row">
                             <div class="form-group col-sm-12 col-md-6">
                                 <label for="edit_school_name">{{ __('name') }} <span class="text-danger">*</span></label>
                                 <input type="text" name="edit_school_name" id="edit_school_name" placeholder="{{__('schools')}}" class="form-control" required>
@@ -329,7 +329,7 @@
                                 <label for="edit_school_support_phone">{{ __('school').' '.__('phone') }} <span class="text-danger">*</span></label>
                                 <input type="number" name="edit_school_support_phone" min="0" id="edit_school_support_phone" placeholder="{{__('support').' '.__('phone')}}" class="form-control remove-number-increment" required>
                             </div>
-                            
+
                             <div class="form-group col-sm-12 col-md-3" id="edit_assign_package_container">
                                 <label for="assign_package">{{ __('assign_package')}} </label>
                                 {!! Form::select('assign_package', $packages, null, ['class' => 'form-control mb-2', 'placeholder' => __('select_package'),'id' => 'edit_assign_package']) !!}
@@ -345,6 +345,22 @@
 
                             </div>
 
+                            <div class="form-group col-sm-12 col-md-3">
+                                <h4 class="card-title">Assign Books</h4>
+                                <div class="form-group">
+                                    <label>Select Books:</label>
+                                    <select class="form-control select2" name="book_ids[]" id="edit_book_ids" multiple>
+                                        @foreach ($books as $book)
+                                            <option value="{{ $book->id }}">{{ $book->title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <p class="text-danger" id="edit-book-limit-warning" style="display: none;">You have
+                                    reached
+                                    the maximum book limit for this package.</p>
+                            </div>
+
                             <div class="form-group col-sm-12 col-md-6">
                                 <label for="edit_school_tagline">{{ __('tagline')}} <span class="text-danger">*</span></label>
                                 <textarea name="edit_school_tagline" id="edit_school_tagline" cols="30" rows="3" class="form-control" placeholder="{{__('tagline')}}" required></textarea>
@@ -354,9 +370,9 @@
                                 <textarea name="edit_school_address" id="edit_school_address" cols="30" rows="3" class="form-control" placeholder="{{__('address')}}" required></textarea>
                             </div>
 
-                            
+
                         </div>
-                        <div class="row">    
+                        <div class="row">
                             <div class="form-group col-sm-12 col-md-3">
                                 <label>{{ __('domain').' '. __('type') }} <span class="text-danger">*</span></label><br>
                                 <div class="d-flex">
@@ -373,10 +389,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">    
+                        <div class="row">
                             <div class="form-group col-sm-12 col-md-4 defaultDomain" style="display: none">
                                 <label for="school_domain">{{ __('default_domain')}}</label>
-                                <div class="input-group mb-3">
+                                <div class="mb-3 input-group">
                                         <input type="text" class="form-control domain-pattern" id="edit_default_domain" name="edit_domain" placeholder="{{ __('domain') }}" aria-label="Recipient's username" aria-describedby="basic-addon2" disabled>
                                     <div class="input-group-append">
                                         <span class="input-group-text text-body" id="basic-addon2">.{{ $baseUrlWithoutScheme }}</span>
@@ -385,7 +401,7 @@
                             </div>
                             <div class="form-group col-sm-12 col-md-4 customDomain" style="display: none">
                                 <label for="school_domain">{{ __('custom_domain')}}</label>
-                                <div class="input-group mb-3">
+                                <div class="mb-3 input-group">
                                         <input type="text" class="form-control domain-pattern" id="edit_custom_domain" name="edit_domain" placeholder="{{ __('domain') }}" aria-label="Recipient's username" aria-describedby="basic-addon2" disabled>
                                 </div>
                             </div>
@@ -439,7 +455,7 @@
                                             <label class="d-block">{{$data->name}} @if($data->is_required)
                                                     <span class="text-danger">*</span>
                                                 @endif</label>
-                                            <div class="row form-check-inline ml-1">
+                                            <div class="ml-1 row form-check-inline">
                                                 @foreach ($data->default_values as $keyRadio => $value)
                                                     <div class="col-md-12 col-lg-12 col-xl-6 col-sm-12 form-check">
                                                         <label class="form-check-label">
@@ -455,7 +471,7 @@
                                             <label class="d-block">{{$data->name}} @if($data->is_required)
                                                     <span class="text-danger">*</span>
                                                 @endif</label>
-                                            <div class="row form-check-inline ml-1">
+                                            <div class="ml-1 row form-check-inline">
                                                 @foreach ($data->default_values as $chkKey => $value)
                                                     <div class="col-lg-12 col-xl-6 col-md-12 col-sm-12 form-check">
                                                         <label class="form-check-label">
@@ -550,7 +566,7 @@
                             <div class="form-group col-sm-12 col-md-4">
                                 <div class="d-flex">
                                     <div class="form-check w-fit-content">
-                                        <label class="form-check-label ml-4">
+                                        <label class="ml-4 form-check-label">
                                             <input type="checkbox" class="form-check-input" name="reset_password" value="1">{{ __('reset_password') }}
                                         </label>
                                     </div>
@@ -559,7 +575,7 @@
                             <div class="form-group col-sm-12 col-md-4">
                                 <div class="d-flex">
                                     <div class="form-check w-fit-content">
-                                        <label class="form-check-label ml-4">
+                                        <label class="ml-4 form-check-label">
                                             <input type="checkbox" class="form-check-input" name="resend_email" value="1">{{ __('resend_email') }}
                                         </label>
                                     </div>
@@ -568,7 +584,7 @@
                             <div class="form-group col-sm-12 col-md-4">
                                 <div class="d-flex">
                                     <div class="form-check w-fit-content">
-                                        <label class="form-check-label ml-4">
+                                        <label class="ml-4 form-check-label">
                                             <input type="checkbox" class="form-check-input" id="manually_verify_email" name="manually_verify_email" value="1"> {{ __('manually_verify_email') }}
                                         </label>
                                     </div>
@@ -577,7 +593,7 @@
                             <div class="form-group col-sm-12 col-md-4">
                                 <div class="d-flex">
                                     <div class="form-check w-fit-content">
-                                        <label class="form-check-label ml-4">
+                                        <label class="ml-4 form-check-label">
                                             <input type="checkbox" class="form-check-input" id="two_factor_verification" name="two_factor_verification" value="0"> {{ __('two_factor_verification') }}
                                         </label>
                                     </div>
@@ -617,7 +633,7 @@
         $(document).ready(function() {
             $('#createDemoSchool').click(function() {
                 showLoading();// Show loading message
-    
+
                 $.ajax({
                     url: '/schools/create-demo-school',
                     type: 'POST',
@@ -631,7 +647,7 @@
                             showSuccessToast(data.message);
                             setTimeout(function() {
                                 window.location.reload();
-                            }, 2000); 
+                            }, 2000);
                         } else {
                             closeLoading();
                             showErrorToast(data.message);
@@ -645,7 +661,7 @@
                 });
             });
 
-        
+
         });
     </script>
     <script>
@@ -658,7 +674,7 @@
                     $('.customDomain').show().find('input').prop('disabled', false);
                     $('.defaultDomain').hide().find('input').prop('disabled', true);
                 }
-            }  
+            }
             $("input[name='domain_type']").on('change', toggleFields);
 
             toggleFields();

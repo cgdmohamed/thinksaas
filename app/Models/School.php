@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Book;
 
 class School extends Model
 {
@@ -63,9 +64,13 @@ class School extends Model
 
     public function extra_school_details()
     {
-        return $this->hasMany(ExtraSchoolData::class, 'school_id', 'id'); 
+        return $this->hasMany(ExtraSchoolData::class, 'school_id', 'id');
     }
 
+    public function books()
+    {
+        return $this->belongsToMany(Book::class, 'school_books', 'school_id', 'book_id')->withTimestamps();
+    }
 
 //    public function features() {
 ////        return $this->subscription()->union($this->addon());
