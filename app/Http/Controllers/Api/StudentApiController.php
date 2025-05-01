@@ -120,7 +120,7 @@ class StudentApiController extends Controller {
             DB::connection('school')->reconnect();
             DB::setDefaultConnection('school');
         } else {
-            return response()->json(['errors' => true,'message' => 'Invalid school code'], 200);
+            ResponseService::errorResponse('Invalid Login Credentials', null, config('constants.RESPONSE_CODE.INVALID_LOGIN'));
         }
 
         $user = User::withTrashed()

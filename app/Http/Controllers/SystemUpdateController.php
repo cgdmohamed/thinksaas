@@ -137,9 +137,56 @@ class SystemUpdateController extends Controller {
 
             unlink($source_path1);
             unlink($ver_file1);
+
             SystemSetting::where('name', 'system_version')->update([
                 'data' => $version_file['update_version']
             ]);
+
+            $wizardSettings = [
+                [
+                    'name' => 'wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'system_settings_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'notification_settings_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'email_settings_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'verify_email_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'email_template_settings_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'payment_settings_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ],
+                [
+                    'name' => 'third_party_api_settings_wizard_checkMark',
+                    'data' => 1,
+                    'type' => 'integer'
+                ]
+            ];
+    
+            SystemSetting::upsert($wizardSettings, ["name"], ["data","type"]);
+
             $this->cache->removeSystemCache(config('constants.CACHE.SYSTEM.SETTINGS'));
             ResponseService::successResponse('System Updated Successfully');
         } catch (Throwable $e) {

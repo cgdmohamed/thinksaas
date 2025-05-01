@@ -74,7 +74,7 @@ class LessonController extends Controller {
                 'description'           => 'required',
                 'class_section_id'      => 'required|array',
                 'class_section_id.*'    => 'numeric',
-                'class_subject_id'      => 'required|numeric',
+                'subject_id'      => 'required|numeric',
                 'file_data'             => 'nullable|array',
                 'file_data.*.type'      => 'required|in:file_upload,youtube_link,video_upload,other_link',
                 'file_data.*.name'      => 'required_with:file_data.*.type',
@@ -118,10 +118,11 @@ class LessonController extends Controller {
         }
         try {
             DB::beginTransaction();
-
+        
             $section_ids = is_array($request->class_section_id) ? $request->class_section_id : [$request->class_section_id];
-
             $lessonFileData = [];
+        
+            // Prepare file data if available
             if (!empty($request->file_data)) {
                 foreach ($request->file_data as $file) {
                     if ($file['type']) {
@@ -129,65 +130,70 @@ class LessonController extends Controller {
                     }
                 }
             }
-            $lesson = [];
-            $lessonModelAssociate = [];
-            $lessonCommonData = [];
-
+        
+            // Prepare lesson data for all section IDs
             $lessonData = [];
             foreach ($section_ids as $section_id) {
                 $lessonData = array_merge($request->all(), ['class_section_id' => $section_id]);
             }
-
-            // Store the lesson data
+        
+            // Get the related class subject for each section
+            if ($request->class_section_id) {
+                foreach ($request->class_section_id as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with(['class_subject' => function ($q) use ($request) {
+                        $q->where('subject_id', $request->subject_id);
+                    }])->first();
+                }
+            }
+        
+            // Associate class_subject_id with the lesson data
+            $lessonData['class_subject_id'] = $classSection->class_subject->id;
+            unset($lessonData['subject_id']);
+        
+            // Create lesson
             $lesson = $this->lesson->create($lessonData);
-
-            $lessonCommonData['lesson_id'] = $lesson->id;
-
+            $lessonCommonData = ['lesson_id' => $lesson->id];
+        
+            // Create lesson_common data for each section
             foreach ($section_ids as $section_id) {
-                $lessonData = array_merge($request->all(), ['class_section_id' => $section_id]);
-                
-                $lessonCommonData['class_section_id'] = $lessonData['class_section_id'];
-    
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->class_subjects->builder()
+                    ->where('class_id', $classSection->class->id)
+                    ->where('subject_id', $request->subject_id)
+                    ->first();
+        
+                $lessonCommonData['class_section_id'] = $section_id;
+                $lessonCommonData['class_subject_id'] = $classSubjects->id;
                 $this->lessonCommon->create($lessonCommonData);
             }
-
-            $lessonFile = $this->files->model();
-            $lessonModelAssociate = $lessonFile->modal()->associate($lesson);
-
-            // Associate files with the lesson
+        
+            // Associate files with the lesson and store them
             if ($lessonFileData) {
+                $lessonFile = $this->files->model();
                 foreach ($lessonFileData as &$fileData) {
-                    $fileData['modal_type'] = $lessonModelAssociate->modal_type;
-                    $fileData['modal_id'] = $lessonModelAssociate->modal_id;
+                    $fileData['modal_type'] = $lessonFile->modal_type;
+                    $fileData['modal_id'] = $lessonFile->modal_id;
                 }
-                // Store Bulk Data of Files
                 $this->files->createBulk($lessonFileData);
             }
-
+        
+            // Send notification to all students in the class section
             $user = $this->student->builder()->with('user')->where('class_section_id', $request->class_section_id)->pluck('user_id');
-            $subjectName = $this->class_subjects->builder()->with('subject')->where('id', $request->class_subject_id)->first();
-            $title = 'Lesson Alert !!!';
-            $body = 'New Lesson added for ' . $subjectName;
-            $type = "lesson";
-           
-            send_notification($user, $title, $body, $type);
-
+            $subjectName = $this->subject->builder()->where('id', $request->subject_id)->first();
+            send_notification($user, 'Lesson Alert !!!', 'New Lesson added for ' . $subjectName->name, 'lesson');
+        
             DB::commit();
             ResponseService::successResponse('Data Stored Successfully');
         } catch (Throwable $e) {
-            if (Str::contains($e->getMessage(), [
-                'does not exist','file_get_contents'
-            ])) {
-                DB::commit();
+            DB::rollBack();
+        
+            if (Str::contains($e->getMessage(), ['does not exist', 'file_get_contents'])) {
                 ResponseService::warningResponse("Data Stored successfully. But App push notification not send.");
             } else {
-                DB::rollBack();
                 ResponseService::logErrorResponse($e, "Lesson Controller -> Store Method");
                 ResponseService::errorResponse();
             }
-            
         }
-
     }
 
     private function prepareFileData($file)
@@ -237,40 +243,40 @@ class LessonController extends Controller {
         $order = request('order', 'DESC');
         $search = request('search');
 
-        $sql = $this->lesson->builder()->with('class_subject', 'class_section', 'topic', 'file', 'lesson_commons')
-    ->where(function ($query) use ($search) {
-        $query->when($search, function ($query) use ($search) {
-            $query->where(function ($query) use ($search) {
-                $query->where('id', 'LIKE', "%$search%")
-                    ->orWhere('name', 'LIKE', "%$search%")
-                    ->orWhere('description', 'LIKE', "%$search%")
-                    ->orWhere('created_at', 'LIKE', "%" . date('Y-m-d H:i:s', strtotime($search)) . "%")
-                    ->orWhere('updated_at', 'LIKE', "%" . date('Y-m-d H:i:s', strtotime($search)) . "%")
-                    ->orWhereHas('class_section.section', function ($q) use ($search) {
-                        $q->where('name', 'LIKE', "%$search%");
-                    })
-                    ->orWhereHas('class_section.class', function ($q) use ($search) {
-                        $q->where('name', 'LIKE', "%$search%");
-                    })
-                    ->orWhereHas('class_subject.subject', function ($q) use ($search) {
-                        $q->where('name', 'LIKE', "%$search%");
-                    });
+        $sql = $this->lesson->builder()->with('class_subject', 'class_section', 'topic', 'file', 'lesson_commons')->where(function ($query) use ($search) {
+            $query->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('id', 'LIKE', "%$search%")
+                        ->orWhere('name', 'LIKE', "%$search%")
+                        ->orWhere('description', 'LIKE', "%$search%")
+                        ->orWhere('created_at', 'LIKE', "%" . date('Y-m-d H:i:s', strtotime($search)) . "%")
+                        ->orWhere('updated_at', 'LIKE', "%" . date('Y-m-d H:i:s', strtotime($search)) . "%")
+                        ->orWhereHas('class_section.section', function ($q) use ($search) {
+                            $q->where('name', 'LIKE', "%$search%");
+                        })
+                        ->orWhereHas('class_section.class', function ($q) use ($search) {
+                            $q->where('name', 'LIKE', "%$search%");
+                        })
+                        ->orWhereHas('class_subject.subject', function ($q) use ($search) {
+                            $q->where('name', 'LIKE', "%$search%");
+                        });
+                });
             });
         });
-    })
-    ->when(request('class_id') != null, function ($query) {
-        $class_id = request('class_id');
-        // $query->where('class_section_id', $class_id);
-        
-        $query->whereHas('lesson_commons', function ($q) use ($class_id) {
-            $q->where('class_section_id', $class_id);
-        });
-    })
-    ->when(request('class_subject_id') != null, function ($query) {
-        $subject_id = request('class_subject_id');
-        $query->where('class_subject_id', $subject_id);
-    });
 
+        if(request('class_id')) {
+            $class_id = request('class_id');
+            $sql = $sql->whereHas('lesson_commons', function ($q) use ($class_id ) {
+                $q->where('class_section_id', $class_id);
+            });
+        }
+
+        if(request('class_subject_id')) {
+            $subject_id = request('class_subject_id');
+            $sql = $sql->whereHas('lesson_commons', function ($q) use ($subject_id ) {
+                $q->where('class_subject_id', $subject_id);
+            });
+        }
 
     
         $total = $sql->count();

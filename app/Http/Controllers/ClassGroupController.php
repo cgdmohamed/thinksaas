@@ -55,8 +55,10 @@ class ClassGroupController extends Controller
         $request->validate([
             'name' => 'required',
             'description' => 'required',
-            'image' => 'required',
+            'image' => 'required|image|mimes:jpeg,png,jpg,svg,gif,webp',
             'class_ids' => 'required',
+        ],[
+            'image.mimes' => 'The selected file must be a file of type: jpeg, png, jpg, svg, gif or webp.'
         ]);
 
         try {

@@ -60,32 +60,38 @@ class OnlineExamQuestionController extends Controller {
         try {
             DB::beginTransaction();
             $section_ids = is_array($request->class_section_id) ? $request->class_section_id : [$request->class_section_id];
-            $onlineExamQuestionData = array(
-                'class_section_id' => $request->class_section_id,
-                'class_subject_id' => $request->class_subject_id,
-                'question'         => htmlspecialchars($request->question, ENT_QUOTES | ENT_HTML5),
-                'image_url'        => $request->image,
-                'note'             => $request->note,
-                'last_edited_by'   => Auth::user()->id
-            );
-
-            $onlineExamQuestionList = [];
-            foreach ($section_ids as $section_id) {
-                $onlineExamQuestionList = array_merge($onlineExamQuestionData, ['class_section_id' => $section_id]);
+           
+            // Get the related class subject for each section
+            if ($request->class_section_id) {
+                foreach ($request->class_section_id as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with(['class_subject' => function ($q) use ($request) {
+                        $q->where('subject_id', $request->subject_id);
+                    }])->first();
+                }
             }
-            
-            $onlineExamQuestion = $this->onlineExamQuestion->create($onlineExamQuestionList);
+            $onlineExamQuestionData = [];
 
+            foreach ($section_ids as $section_id) {
+                $onlineExamQuestionData = array_merge($request->all(), ['class_section_id' => $section_id]);
+            }
+
+            $onlineExamQuestionData['class_subject_id'] = $classSection->class_subject->id;
+            $onlineExamQuestionData['last_edited_by'] = $request->user_id;
+            
+            $onlineExamQuestion = $this->onlineExamQuestion->create($onlineExamQuestionData);
             $onlineExamQuestionCommonData = [];
 
             $onlineExamQuestionCommonData['online_exam_question_id'] = $onlineExamQuestion->id;
-
             
             foreach ($section_ids as $section_id) {
-                $onlineExamQuestionData = array_merge($request->all(), ['class_section_id' => $section_id]);
-                
-                $onlineExamQuestionCommonData['class_section_id'] = $onlineExamQuestionData['class_section_id'];
-    
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->classSubjects->builder()
+                    ->where('class_id', $classSection->class->id)
+                    ->where('subject_id', $request->subject_id)
+                    ->first();
+        
+                $onlineExamQuestionCommonData['class_section_id'] = $section_id;
+                $onlineExamQuestionCommonData['class_subject_id'] = $classSubjects->id;
                 $this->onlineExamQuestionCommon->create($onlineExamQuestionCommonData);
             }
 
@@ -143,7 +149,11 @@ class OnlineExamQuestionController extends Controller {
                         $q->where('class_section_id', $class_id);
                     });
                 })->when(request('class_subject_id'), function ($query) {
-                    $query->where('class_subject_id', request('class_subject_id'));
+                    // $query->where('class_subject_id', request('class_subject_id'));
+                    $class_subject_id = request('class_subject_id');
+                    $query->whereHas('online_exam_question_commons', function ($q) use ($class_subject_id) {
+                        $q->where('class_subject_id', $class_subject_id);
+                    });
                 })->when($subject_id, function($q) use($subject_id) {
                     $q->where('class_subject_id', $subject_id);
                 });

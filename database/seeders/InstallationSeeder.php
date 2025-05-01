@@ -67,7 +67,7 @@ class InstallationSeeder extends Seeder {
             ['name' => 'school-terms-condition'],
             ['name' => 'subscription-bill-payment'],
             ['name' => 'web-settings'],
-            ['name' => 'email-template'],
+            ['name' => 'email-template'],            
             ['name' => 'custom-school-email'],
             ['name' => 'database-backup'],
             ...self::permission('school-custom-field'),
@@ -79,7 +79,7 @@ class InstallationSeeder extends Seeder {
             ['name' => 'edit-book'],
             ['name' => 'delete-book']
 
-
+            
 
         ];
         $permissions = array_map(static function ($data) {
@@ -155,7 +155,7 @@ class InstallationSeeder extends Seeder {
             'subscription-bill-payment',
             'web-settings',
             'custom-school-email',
-
+            
             'database-backup',
 
             'school-custom-field-list',

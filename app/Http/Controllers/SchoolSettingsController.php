@@ -60,21 +60,23 @@ class SchoolSettingsController extends Controller {
         // Remove the scheme (http:// or https://)
         $baseUrlWithoutScheme = preg_replace("(^https?://)", "", $baseUrl);
         $baseUrlWithoutScheme = str_replace("www.", "", $baseUrlWithoutScheme);
-       
-        if (strpos($baseUrlWithoutScheme, '.') !== false) {
-            $baseUrlWithoutScheme = substr($baseUrlWithoutScheme, strpos($baseUrlWithoutScheme, '.') + 1);
-        }
+		$baseUrlParts = parse_url($baseUrl);
+		$host = $baseUrlParts['host'];
+		$host = str_replace("www.", "", $host);
+		$hostParts = explode('.', $host);
+		
+		 if (count($hostParts) > 2) {
+              if (strpos($baseUrlWithoutScheme, '.') !== false) {
+					$baseUrlWithoutScheme = substr($baseUrlWithoutScheme, strpos($baseUrlWithoutScheme, '.') + 1);
+				}
+         }
+		
         $systemSettings = $this->cache->getSystemSettings();
-
         $schoolService = app(SchoolDataService::class);
         DB::setDefaultConnection('mysql');
-      
         $domain_type = School::where('id',Auth::user()->school_id)->pluck('domain_type')->first();
-        // dd($domain_type);
         $schoolService->switchToSchoolDatabase(Auth::user()->school_id);
-
-        // dd($baseUrl);
-
+        
         return view('school-settings.general-settings', compact('settings','getDateFormat','getTimeFormat','baseUrlWithoutScheme','systemSettings','domain_type'));
     }
 

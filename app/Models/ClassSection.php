@@ -144,4 +144,14 @@ class ClassSection extends Model {
         }
         return $name;
     }
+
+    /**
+     * Get the class_subject that owns the ClassSection
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function class_subject()
+    {
+        return $this->belongsTo(ClassSubject::class, 'class_id', 'class_id');
+    }
 }

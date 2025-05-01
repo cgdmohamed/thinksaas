@@ -43,7 +43,7 @@ class SchoolDataService {
         $school->updated_at = $schoolData->updated_at;
         $school->save();
 
-        $mainUser = DB::connection('mysql')->table('users')->where('id',$schoolData->admin_id)->first();
+        $mainUser = DB::connection('mysql')->table('users')->where('id',$schoolData->admin_id)->first();        
 
         $userRow[] = [
             'id' => $mainUser->id,
@@ -203,7 +203,7 @@ class SchoolDataService {
         );
         SchoolSetting::upsert($schoolSettingData, ["name", "school_id"], ["data", "type"]);
     }
-
+    
     public function createPreSetupRole($school) {
 
         DB::setDefaultConnection('school');
@@ -236,27 +236,27 @@ class SchoolDataService {
     {
         $school_name = str_replace('.','_',$schoolData->name);
         // $database_name = 'eschool_saas_'.$schoolData->id.'_'.strtolower(strtok($school_name," "));
-
+        
         // Check if $school_name is an array and convert it to a string
         if (is_array($school_name)) {
             $school_name = implode(" ", $school_name); // Join the array elements into a string
         }
-
+        
         // Now apply strtok and strtolower
         $database_name = 'eschool_saas_'.$schoolData->id.'_'.strtolower(strtok($school_name, " "));
 
-
+            
         $query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME =  ?";
 
         $db = DB::select($query, [$database_name]);
-
+        
         if (empty($db)) {
             DB::statement("CREATE DATABASE {$database_name}");
         }
 
         $schoolData->database_name = $database_name;
         $schoolData->save();
-
+        
         // Artisan::call('migrate:school');
         Config::set('database.connections.school.database', $schoolData->database_name);
         DB::purge('school');
@@ -267,7 +267,7 @@ class SchoolDataService {
             '--path' => 'database/migrations/schools',
             '--force' => true,
         ]);
-
+        
     }
 
     public function createPermissions() {
@@ -384,7 +384,7 @@ class SchoolDataService {
             ['name' => 'database-backup' ],
             ['name' => 'view-exam-marks']
 
-
+            
 
         ];
         $permissions = array_map(static function ($data) {
@@ -600,7 +600,7 @@ class SchoolDataService {
             'notification-delete',
 
             'certificate-list',
-            'certificate-create',
+            'certificate-create', 
             'certificate-edit',
             'certificate-delete',
 
@@ -669,7 +669,7 @@ class SchoolDataService {
             'online-exam-questions-edit',
             'online-exam-questions-delete',
             'online-exam-result-list',
-
+            
             'leave-list',
             'leave-create',
             'leave-edit',
@@ -682,7 +682,7 @@ class SchoolDataService {
         ];
         $teacher_role->syncPermissions($TeacherHasAccessTo);
     }
-
+    
     public static  function switchToMainDatabase()
     {
         DB::setDefaultConnection('mysql');
@@ -703,7 +703,7 @@ class SchoolDataService {
         DB::setDefaultConnection('school');
 
         Session::put('school_database_name', $school_database);
-
+        
     }
-
+    
 }

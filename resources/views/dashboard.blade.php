@@ -456,16 +456,28 @@
                     <h4 class="card-title">{{ __('holiday') }}</h4>
                     <div class="v-scroll dashboard-description">
                         <table class="table custom-table">
-                            <tbody>
-                                @foreach ($holiday as $holiday)
+                            @hasNotFeature('Holiday Management')
+                                <tbody class="leave-list">
+                                    <tr>
+                                        <td colspan="2" class="text-center text-small">
+                                            {{ __('Purchase') . ' ' . __('Holiday Management') . ' ' . __('to Continue using this functionality') }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            @endHasNotFeature
+
+                            @hasFeature('Holiday Management')
+                                <tbody>
+                                    @foreach ($holiday as $holiday)
                                     <tr>
                                         <td>{{ $holiday->title }}</td>
                                         <td><span
                                                 class="float-right text-muted">{{ date('d - M', strtotime($holiday->date)) }}</span>
                                         </td>
                                     </tr>
-                                @endforeach
-                            </tbody>
+                                    @endforeach
+                                </tbody>
+                            @endHasFeature
                         </table>
                     </div>
                 </div>
@@ -634,15 +646,18 @@
                     </h4>
                     <div class="v-scroll">
                         <table class="table custom-table">
-                            <thead>
-                                <th></th>
-                                <th>{{ __('name') }}</th>
-                                <th>{{ __('role') }}</th>
-                                <th class="text-right">{{ __('assign_schools') }}</th>
+                            @hasNotFeature('Staff Management')
+                                <thead>
+                                    <th></th>
+                                    <th>{{ __('name') }}</th>
+                                    <th>{{ __('role') }}</th>
+                                    <th class="text-right">{{ __('assign_schools') }}</th>
                             </thead>
-                            <tbody>
-                                @foreach ($staffs as $staff)
-                                    <tr>
+                            @endHasNotFeature
+                            @hasFeature('Staff Management')
+                                <tbody>
+                                    @foreach ($staffs as $staff)
+                                        <tr>
                                         <td>
                                             <img src="{{ $staff->image }}" onerror="onErrorImage(event)"
                                                 class="me-2" alt="image">
@@ -651,8 +666,9 @@
                                         <td>{{ $staff->roles->first()->name ?? '' }}</td>
                                         <td>{{ $staff->school_names }}</td>
                                     </tr>
-                                @endforeach
-                            </tbody>
+                                    @endforeach
+                                </tbody>
+                            @endHasFeature
                         </table>
                     </div>
                 </div>

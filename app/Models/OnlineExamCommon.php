@@ -13,6 +13,7 @@ class OnlineExamCommon extends Model
     protected $fillable = [
         'online_exam_id',
         'class_section_id',
+        'class_subject_id',
     ];
 
     protected $appends = ['class_section_with_medium','subject_with_name'];
@@ -31,7 +32,7 @@ class OnlineExamCommon extends Model
                 $teacherId = Auth::user()->id;
                 return $query->whereHas('subject_teacher', function ($query) use ($teacherId) {
                     $query->where('teacher_id', $teacherId)
-                          ->whereColumn('class_section_id', 'lessons.class_section_id');
+                          ->whereColumn('class_section_id', 'online_exam_commons.class_section_id');
                 })->where('school_id',Auth::user()->school_id);
                 return $query->where('school_id', Auth::user()->school_id);
             }

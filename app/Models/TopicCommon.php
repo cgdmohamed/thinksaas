@@ -13,6 +13,7 @@ class TopicCommon extends Model
     protected $fillable = [
         'lesson_topics_id',
         'class_section_id',
+        'class_subject_id',
     ];
 
     protected $appends = ['class_section_with_medium','subject_with_name'];

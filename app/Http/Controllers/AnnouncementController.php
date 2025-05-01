@@ -75,6 +75,7 @@ class AnnouncementController extends Controller {
         try {
             DB::beginTransaction();
             $sessionYear = $this->cache->getDefaultSessionYear(); // Get Current Session Year
+            $section_ids = is_array($request->class_section_id) ? $request->class_section_id : [$request->class_section_id];
             // Custom Announcement Array to Store Data
             $announcementData = array(
                 'title'           => $request->title,
@@ -85,46 +86,54 @@ class AnnouncementController extends Controller {
             
             $announcement = $this->announcement->create($announcementData); // Store Data
             $announcementClassData = array();
+            $classSubjects = [];
+            if (!empty($request->subject_id)) {
 
-            if (!empty($request->class_subject_id)) {
-
+                foreach ($section_ids as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                    $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id', $request->subject_id)->first();
+                }
                 // When Subject is passed then Store the data according to Subject Teacher
                 $teacherId = Auth::user()->id; // Teacher ID
-                $subjectTeacherData = $this->subjectTeacher->builder()->whereIn('class_section_id', $request->class_section_id)->where(['teacher_id' => $teacherId, 'class_subject_id' => $request->class_subject_id])->with('subject')->first(); // Get the Subject Teacher Data
+                $subjectTeacherData = $this->subjectTeacher->builder()->whereIn('class_section_id', $request->class_section_id)->where(['teacher_id' => $teacherId, 'class_subject_id' => $classSubjects->id])->with('subject')->first(); // Get the Subject Teacher Data
                 $subjectName = $subjectTeacherData->subject_with_name; // Subject Name
 
                 // Check the Subject Type and Select Students According to it for Notification
-                $getClassSubjectType = $this->classSubject->findById($request->class_subject_id,['type']);
+                $getClassSubjectType = $this->classSubject->findById($classSubjects->id,['type']);
                 if ($getClassSubjectType == 'Elective') {
-                    $getStudentId = $this->studentSubject->builder()->select('student_id')->whereIn('class_section_id', $request->class_section_id)->where(['class_subject_id' => $request->class_subject_id])->get()->pluck('student_id'); // Get the Student's ID According to Class Subject
+                    $getStudentId = $this->studentSubject->builder()->select('student_id')->whereIn('class_section_id', $request->class_section_id)->where(['class_subject_id' => $classSubjects->id])->get()->pluck('student_id'); // Get the Student's ID According to Class Subject
                     $notifyUser = $this->student->builder()->select('user_id')->whereIn('id', $getStudentId)->get()->pluck('user_id'); // Get the Student's User ID
                 } else {
                     $notifyUser = $this->student->builder()->select('user_id')->whereIn('class_section_id', $request->class_section_id)->get()->pluck('user_id'); // Get the All Student's User ID In Specified Class
                 }
 
-                // Set class section with subject
-                foreach ($request->class_section_id as $class_section) {
-                    $announcementClassData[] = [
-                        'announcement_id'  => $announcement->id,
-                        'class_section_id' => $class_section,
-                        'class_subject_id' => $request->class_subject_id
-                    ];
-                }
                 $title = trans('New announcement in') . " " .$subjectName; // Title for Notification
 
             } else {
-                $notifyUser = $this->student->builder()->select('user_id')->whereIn('class_section_id', $request->class_section_id)->get()->pluck('user_id'); // Get the Student's User ID of Specified Class for Notification
+                $notifyUser = $this->student->builder()->select('user_id')->whereIn('class_section_id', $section_ids)->get()->pluck('user_id'); // Get the Student's User ID of Specified Class for Notification
 
-                // Set class sections
-                foreach ($request->class_section_id as $class_section) {
-                    $announcementClassData[] = [
-                        'announcement_id'  => $announcement->id,
-                        'class_section_id' => $class_section
-                    ];
-                }
                 $title = trans('New announcement'); // Title for Notification
             }
-            $this->announcementClass->upsert($announcementClassData, ['announcement_id', 'class_section_id', 'school_id'], ['announcement_id', 'class_section_id', 'school_id', 'class_subject_id']);
+
+            foreach ($section_ids as $section_id) {
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id', $request->subject_id)->first();
+
+                if (!empty($request->subject_id)) {
+                    $announcementClassData = [
+                        'announcement_id'   => $announcement->id,
+                        'class_section_id'  => $section_id,
+                        'class_subject_id'  => $classSubjects->id
+                    ];
+                } else {
+                    $announcementClassData = [
+                        'announcement_id'   => $announcement->id,
+                        'class_section_id'  => $section_id,
+                    ];
+                }
+        
+                $this->announcementClass->create($announcementClassData);
+            }
 
             // If File Exists
             if ($request->hasFile('file')) {
@@ -169,7 +178,6 @@ class AnnouncementController extends Controller {
                 // Store the URL data
                 $this->files->createBulk($urlData);
             }
-
             if ($notifyUser !== null && !empty($title)) {
                 $type = 'Class Section'; // Get The Type for Notification
                 $body = $request->title; // Get The Body for Notification

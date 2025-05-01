@@ -108,20 +108,26 @@
                                 <div class="clearfix">
                                     <h4 class="card-title float-left">{{ __('today_schedule') }}</h4>
                                 </div>
-                                <div class="v-scroll">
-                                    @foreach ($timetables as $timetable)
-                                        <div
-                                            class="wrapper mb-2 d-flex align-items-center justify-content-between py-2 border-bottom">
-                                            <div class="d-flex">
-                                                <div class="wrapper ms-3">
-                                                    <h5>{{ $timetable->start_time }} - {{ $timetable->end_time }}</h5>
-                                                    <span
-                                                        class="text-small text-muted">{{ $timetable->subject->name_with_type }}</span>
+                                <div class="v-scroll dashboard-description">
+                                    @if (count($timetables))
+                                        @foreach ($timetables as $timetable)
+                                            <div
+                                                class="wrapper mb-2 d-flex align-items-center justify-content-between py-2 border-bottom">
+                                                <div class="d-flex">
+                                                    <div class="wrapper ms-3">
+                                                        <h5>{{ $timetable->start_time }} - {{ $timetable->end_time }}</h5>
+                                                        <span
+                                                            class="text-small text-muted">{{ $timetable->subject->name_with_type }}</span>
+                                                    </div>
                                                 </div>
+                                                <span class="text-muted mr-2">{{ $timetable->class_section->full_name }}</span>
                                             </div>
-                                            <span class="text-muted mr-2">{{ $timetable->class_section->full_name }}</span>
+                                        @endforeach
+                                    @else
+                                        <div class="col-md-12 text-center bg-light p-2 mb-2">
+                                            <span>{{ __('no_timetable_found') }}.</span>
                                         </div>
-                                    @endforeach
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -208,7 +214,7 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    @if (!empty($announcement))
+                                    @if (count($announcement))
                                         @foreach ($announcement as $key => $row)
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
@@ -216,6 +222,12 @@
                                                 <td>{{ $row->description }}</td>
                                             </tr>
                                         @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="3" class="text-center text-small">
+                                                {{ __('no_announcement_found') }}
+                                            </td>
+                                        </tr>
                                     @endif
                                     </tbody>
                                 </table>

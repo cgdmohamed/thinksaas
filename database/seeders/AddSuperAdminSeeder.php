@@ -45,7 +45,7 @@ class AddSuperAdminSeeder extends Seeder {
             ["name" => "time_format", "data" => "h:i A", "type" => "time"],
             ["name" => "theme_color", "data" => "#22577A", "type" => "string"],
             ["name" => "session_year", "data" => 1, "type" => "string"],
-            ["name" => "system_version", "data" => "1.5.3", "type" => "string"],
+            ["name" => "system_version", "data" => "1.5.4", "type" => "string"],
             ["name" => "email_verified", "data" => 0, "type" => "boolean"],
             ["name" => "subscription_alert", "data" => 7, "type" => "integer"],
             ["name" => "currency_code", "data" => "SAR", "type" => "string"],
@@ -189,7 +189,48 @@ class AddSuperAdminSeeder extends Seeder {
                 'type' => 'text'
             ],
 
+            [
+                'name' => 'wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
 
+            [
+                'name' => 'system_settings_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
+            [
+                'name' => 'notification_settings_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
+            [
+                'name' => 'email_settings_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
+            [
+                'name' => 'verify_email_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
+            [
+                'name' => 'email_template_settings_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
+            [
+                'name' => 'payment_settings_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ],
+            [
+                'name' => 'third_party_api_settings_wizard_checkMark',
+                'data' => 0,
+                'type' => 'integer'
+            ]
+            
         ];
 
         SystemSetting::upsert($systemSettings, ["name"], ["data","type"]);

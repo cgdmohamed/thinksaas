@@ -71,9 +71,15 @@ class OnlineExamQuestion extends Model {
             }
     
             if(Auth::user()->hasRole('Teacher')){
-                $subjectTeacherData = SubjectTeacher::where('teacher_id',Auth::user()->id)->get();
-                $classSubjectIds = $subjectTeacherData->pluck('class_subject_id');
-                return $query->whereIn('class_subject_id',$classSubjectIds)->where('school_id', Auth::user()->school_id);
+                // $subjectTeacherData = SubjectTeacher::where('teacher_id',Auth::user()->id)->get();
+                // $classSubjectIds = $subjectTeacherData->pluck('class_subject_id');
+                // return $query->whereIn('class_subject_id',$classSubjectIds)->where('school_id', Auth::user()->school_id);
+                $teacherId = Auth::user()->id;
+                return $query->whereHas('subject_teacher', function ($query) use ($teacherId) {
+                    $query->where('teacher_id', $teacherId)
+                          ->whereColumn('class_section_id', 'class_section_id');
+                })->where('school_id',Auth::user()->school_id);
+                return $query->where('school_id', Auth::user()->school_id);
             }
     
     
@@ -110,6 +116,10 @@ class OnlineExamQuestion extends Model {
                 $query->where('semester_id', $currentSemester->id)->orWhereNull('semester_id');
             });
         }
+    }
+
+    public function subject_teacher() {
+        return $this->hasMany(SubjectTeacher::class, 'class_subject_id','class_subject_id');
     }
 
 }

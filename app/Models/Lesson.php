@@ -58,7 +58,7 @@ class Lesson extends Model {
                 $teacherId = Auth::user()->id;
                 return $query->whereHas('subject_teacher', function ($query) use ($teacherId) {
                     $query->where('teacher_id', $teacherId)
-                          ->whereColumn('class_section_id', 'lessons.class_section_id');
+                          ->whereColumn('class_section_id', 'class_section_id');
                 })->where('school_id',Auth::user()->school_id);
                 return $query->where('school_id', Auth::user()->school_id);
             }

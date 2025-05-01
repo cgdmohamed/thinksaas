@@ -64,19 +64,6 @@ class DatabaseBackupController extends Controller
         return view('database-backup.index', compact('schoolId'));
     }
 
-    public function download($filename)
-    {
-        $user_id = Auth::user()->hasRole('School Admin') ? Auth::user()->school_id : Auth::user()->id;
-        $zipFileDownload = '';
-        if (Auth::user()->hasRole('School Admin')) {
-            $zipFileDownload = storage_path('app/public/database-backup/schools/' . $user_id . '/' . $filename);
-        } else if (Auth::user()->hasRole('Super Admin')) {
-            $zipFileDownload = storage_path('app/public/database-backup/super-admin/' . $user_id . '/' . $filename);
-        }
-        // dd($zipFileDownload);
-        return response()->download($zipFileDownload)->deleteFileAfterSend(true);
-    }
-
     public function store()
     {
 
@@ -296,8 +283,11 @@ class DatabaseBackupController extends Controller
 
                 $file_name = "database_backup_{$user_Id}_" . Carbon::now()->format('Y-m-d') . '-(V-' . $current_version . ').zip';
                 // dd($file_name);
-                $download_url = route('database-backup.download', ['filename' => $file_name]);
-                // dd($download_url);
+ 
+                $zipFileDownload = 'database-backup/schools/' . $user_Id . '/' . $file_name;
+
+                $download_url = url(Storage::url($zipFileDownload));
+
                 ResponseService::successResponse('Backup completed successfully', $download_url);
             } else {
                 ResponseService::logErrorResponse("DatabaseBackup Controller -> Store Method");
@@ -314,7 +304,7 @@ class DatabaseBackupController extends Controller
 
             $backupData = '';
 
-            $expectedTables = ['addons', 'attachments', 'categories', 'chats', 'failed_jobs', 'features', 'feature_sections', 'feature_section_lists', 'guidances', 'languages', 'messages', 'migrations', 'packages', 'package_features', 'password_resets', 'personal_access_tokens', 'staff_support_schools', 'system_settings', 'user_status_for_next_cycles', 'database_backups'];
+            $expectedTables = ['addons', 'failed_jobs', 'features', 'feature_sections', 'feature_section_lists', 'guidances', 'languages', 'migrations', 'packages', 'package_features', 'password_resets', 'personal_access_tokens', 'staff_support_schools', 'system_settings'];
 
             $allTables = array_diff($tableNames, $expectedTables);
             $tableNames = array_values($allTables);
@@ -440,9 +430,11 @@ class DatabaseBackupController extends Controller
                 // $this->databaseBackup->create($data);
 
                 $file_name = "database_backup_{$user_Id}_" . Carbon::now()->format('Y-m-d') . '-(V-' . $current_version . ').zip';
-                // dd($file_name);
-                $download_url = route('database-backup.download', ['filename' => $file_name]);
-                // dd($download_url);
+               
+                $zipFileDownload = 'database-backup/super-admin/' . $user_Id . '/' . $file_name;
+
+                $download_url = url(Storage::url($zipFileDownload));
+
                 ResponseService::successResponse('Backup completed successfully', $download_url);
             } else {
                 ResponseService::logErrorResponse("DatabaseBackup Controller -> Store Method");

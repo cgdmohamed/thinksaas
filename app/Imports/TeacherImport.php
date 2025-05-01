@@ -100,7 +100,7 @@ class TeacherImport implements ToCollection, WithHeadingRow
                 
                 $users->assignRole('Teacher');
 
-                $staff->create([
+                $staff->updateOrCreate( ['user_id' => $users->id] ,[
                     'user_id'       => $users->id,
                     'qualification' => $row['qualification'],
                     'salary'        => $row['salary'],

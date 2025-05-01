@@ -83,7 +83,7 @@ class OnlineExamController extends Controller {
         $request->validate([
             'class_section_id'      => 'required|array',
             'class_section_id.*'    => 'numeric',
-            'class_subject_id' => 'required',
+            'subject_id' => 'required',
             'title'            => 'required',
             'exam_key'         => 'required|unique:online_exams,exam_key,NULL,id,school_id,' . Auth::user()->school_id,
             'duration'         => 'required|numeric|gte:1',
@@ -95,33 +95,53 @@ class OnlineExamController extends Controller {
 
             DB::beginTransaction();
             $sessionYear = $this->cache->getDefaultSessionYear();
-            $onlineExamData = array(
-                'class_section_id' => $request->class_section_id,
-                'class_subject_id' => $request->class_subject_id,
-                'title'            => htmlspecialchars($request->title),
-                'exam_key'         => $request->exam_key,
-                'duration'         => $request->duration,
-                'start_date'       => date('Y-m-d H:i:s', strtotime($request->start_date)),
-                'end_date'         => date('Y-m-d H:i:s', strtotime($request->end_date)),
-                'session_year_id'  => $sessionYear->id,
-            );
+            // $onlineExamData = array(
+            //     'class_section_id' => $request->class_section_id,
+            //     'class_subject_id' => $request->class_subject_id,
+            //     'title'            => htmlspecialchars($request->title),
+            //     'exam_key'         => $request->exam_key,
+            //     'duration'         => $request->duration,
+            //     'start_date'       => date('Y-m-d H:i:s', strtotime($request->start_date)),
+            //     'end_date'         => date('Y-m-d H:i:s', strtotime($request->end_date)),
+            //     'session_year_id'  => $sessionYear->id,
+            // );
 
             $onlineExamList = [];
             foreach ($section_ids as $section_id) {
-                $onlineExamList = array_merge($onlineExamData, ['class_section_id' => $section_id]);
+                $onlineExamList = array_merge($request->all(), ['class_section_id' => $section_id]);
             }
+
+            // Get the related class subject for each section
+            if ($request->class_section_id) {
+                foreach ($request->class_section_id as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with(['class_subject' => function ($q) use ($request) {
+                        $q->where('subject_id', $request->subject_id);
+                    }])->first();
+                }
+            }
+
+            // Associate class_subject_id with the lesson data
+            $onlineExamList['exam_key'] = $request->exam_key;
+            $onlineExamList['class_subject_id'] = $classSection->class_subject->id;
+            $onlineExamList['session_year_id'] = $sessionYear->id;
+
+            unset($onlineExamList['subject_id']);
 
             $onlineExam = $this->onlineExam->create($onlineExamList);
 
             $onlineExamCommonData = [];
-
             $onlineExamCommonData['online_exam_id'] = $onlineExam->id;
-            
+
+            // Create online_exam_common data for each section
             foreach ($section_ids as $section_id) {
-                $onlineExamData = array_merge($request->all(), ['class_section_id' => $section_id]);
-                
-                $onlineExamCommonData['class_section_id'] = $onlineExamData['class_section_id'];
-    
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->classSubjects->builder()
+                    ->where('class_id', $classSection->class->id)
+                    ->where('subject_id', $request->subject_id)
+                    ->first();
+        
+                $onlineExamCommonData['class_section_id'] = $section_id;
+                $onlineExamCommonData['class_subject_id'] = $classSubjects->id;
                 $this->onlineExamCommon->create($onlineExamCommonData);
             }
             

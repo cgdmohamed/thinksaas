@@ -124,7 +124,7 @@ class GuardianController extends Controller {
             'last_name'  => 'required',
             'gender'     => 'required',
             'mobile'     => 'required',
-            'image'      => 'nullable|mimes:png,jpg,jpeg|max:4096',
+            'image'      => 'nullable|image|mimes:jpeg,png,jpg,svg,gif,webp',
         ]);
         try {
             $data = $request->except('_token', 'edit_id', '_method','reset_password');

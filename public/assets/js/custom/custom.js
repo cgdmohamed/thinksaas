@@ -1048,30 +1048,51 @@ $('#flutterwave_status').on('change', function (e) {
 $('#bank_transfer_status').on('change', function (e) {
     e.preventDefault();
     if ($(this).val() == 1) {
-        // Disable others when Bank Transfer is enabled
-        $('#razorpay_status').val(0);
-        $('#stripe_status').val(0);
-        $('#paystack_status').val(0);
-        $('#flutterwave_status').val(0);
-    }
-});
-
-function resetAll() {
-    $('#razorpay_status').val(0);
-    $('#stripe_status').val(0);
-    $('#paystack_status').val(0);
-    $('#flutterwave_status').val(0);
-    $('#bank_transfer_status').val(0);
-}
-
-$('#bank_transfer_status').on('change', function (e) {
-    e.preventDefault();
-    if ($(this).val() == 1) {
         $('#razorpay_status').val(0);
         $('#stripe_status').val(0);
     } else {
         $('#bank_transfer_status').val(1);
     }
+});
+
+// Paystack toggle for new UI
+$(document).ready(function() {
+    $('#Paystack').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#PaystackForm').removeClass('d-none');
+            
+            // Disable other payment methods
+            $('#stripe_status').val(0);
+            $('#razorpay_status').val(0);
+            $('#flutterwave_status').val(0);
+            $('#bank_transfer_status').val(0);
+            
+            // Uncheck other toggles
+            $('#Flutterwave').prop('checked', false);
+            $('#FlutterwaveForm').addClass('d-none');
+        } else {
+            $('#PaystackForm').addClass('d-none');
+        }
+    });
+    
+    // Flutterwave toggle for new UI
+    $('#Flutterwave').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#FlutterwaveForm').removeClass('d-none');
+            
+            // Disable other payment methods
+            $('#stripe_status').val(0);
+            $('#razorpay_status').val(0);
+            $('#paystack_status').val(0);
+            $('#bank_transfer_status').val(0);
+            
+            // Uncheck other toggles
+            $('#Paystack').prop('checked', false);
+            $('#PaystackForm').addClass('d-none');
+        } else {
+            $('#FlutterwaveForm').addClass('d-none');
+        }
+    });
 });
 
 $('#assign-roll-no-form').on('submit', function (e) {
@@ -2035,20 +2056,231 @@ $(document).on('change', '.timetable_start_time', function () {
 let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 let calendarEl = document.getElementById('calendar');
 let containerEl = document.getElementById('external-events');
-if (containerEl !== null) {
-    new FullCalendar.Draggable(containerEl, {
-        itemSelector: '.fc-event',
-        eventData: function (eventEl) {
-            return {
-                title: eventEl.innerText,
-                color: $(eventEl).data('color'),
-                duration: $(eventEl).data('duration'),
-                textColor: getContrastColor($(eventEl).data('color')),
-                // "data-id": $(eventEl).data('id'),
-            };
-        }
-    });
+if (calendarEl !== null) {
+    var createTimetable = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        contentHeight: 1500,
+        direction: layout_direction,
+        headerToolbar: {
+            start: '', // will normally be on the left. if RTL, will be on the right
+            center: '',
+            end: '',
+            // end: 'listDay,listWeek,timeGridWeek' // will normally be on the right. if RTL, will be on the left
+        },
+        views: {
+            listDay: {buttonText: 'Today'},
+            listWeek: {buttonText: 'List'},
+            timeGridWeek: {buttonText: 'Calendar'}
+        },
+        slotMinTime: "00:00:00",
+        slotMaxTime: "00:00:00",
+        allDaySlot: false,
+        firstDay: 1,
+        expandRows: true,
+        slotDuration: "01:00:00",
+        snapDuration: "00:01:00",
+        dayHeaderFormat: {
+            weekday: 'short'
+        },
+        editable: true,
+        droppable: true,
+        eventDurationEditable: true,
+        eventResizableFromStart: true,
+        eventDidMount: function (event) {
+            $(event.el).find('.fc-event-main .fc-event-main-frame').append("<div class='text-right'><span class='fa fa-times remove-timetable' data-id=" + event.event.id + "></span></div>");
+        },
+        eventReceive: function (event) {
+            let subject_teacher_id = $(event.draggedEl).data('subject_teacher_id');
+            let subject_id = $(event.draggedEl).data('subject_id');
+            let note = $(event.draggedEl).data('note');
+            let class_section_id = $('#class_section_id').val();
+            let semester_id = $('#semester_id').val();
+            let date = new Date(event.event.start);
+            let startTime24Hr = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 
+            let end_time = new Date(event.event.end);
+            let endTime24Hr = end_time.getHours() + ":" + end_time.getMinutes() + ":" + end_time.getSeconds();
+
+            // Check for overlapping events
+            let overlappingEvents = createTimetable.getEvents().filter(function(existingEvent) {
+                // Skip the current event being dragged
+                if (existingEvent.id === event.event.id) return false;
+                
+                // Check if events are on the same day
+                let existingDate = new Date(existingEvent.start);
+                if (existingDate.getDay() !== date.getDay()) return false;
+                
+                // Check for time overlap
+                let existingStart = new Date(existingEvent.start);
+                let existingEnd = new Date(existingEvent.end);
+                let newStart = new Date(event.event.start);
+                let newEnd = new Date(event.event.end);
+                
+                return (newStart < existingEnd && newEnd > existingStart);
+            });
+
+            if (overlappingEvents.length > 0) {
+                // Only remove the dragged event
+                event.event.remove();
+                showErrorToast(window.trans["Subject is already scheduled for this time slot."]);
+                return;
+            }
+
+            let data = new FormData();
+            if (subject_teacher_id)
+                data.append('subject_teacher_id', subject_teacher_id);
+
+            if (subject_id)
+                data.append('subject_id', subject_id);
+
+            data.append('day', days[date.getDay()]);
+            data.append('start_time', startTime24Hr);
+            data.append('end_time', endTime24Hr);
+            data.append('class_section_id', class_section_id);
+            data.append('semester_id', semester_id);
+            data.append('note', note);
+            data.append('day', days[date.getDay()]);
+            ajaxRequest('POST', baseUrl + '/timetable', data, null, function (response) {
+                event.event.remove();
+                createTimetable.addEvent({
+                    id: response.data.id,
+                    title: event.event.title,
+                    start: event.event.start,
+                    end: event.event.end,
+                    backgroundColor: event.event.backgroundColor,
+                    textColor: getContrastColor(event.event.backgroundColor),
+                });
+            }, function () {
+                event.event.remove();
+            })
+        },
+        eventDrop: function (event) {
+            // This event will be called when event will be dragged from one duration to another
+            let date = new Date(event.event.start);
+            let startTime24Hr = date.getHours() + ":" + getMinutes(date.getMinutes()) + ":" + date.getSeconds() + '0';
+            let end_time = new Date(event.event.end);
+            let endTime24Hr = end_time.getHours() + ":" + getMinutes(end_time.getMinutes()) + ":" + end_time.getSeconds() + '0';
+            let timetable_id = event.event.id;
+
+            // Check for overlapping events
+            let overlappingEvents = createTimetable.getEvents().filter(function(existingEvent) {
+                // Skip the current event being dragged
+                if (existingEvent.id === event.event.id) return false;
+                
+                // Check if events are on the same day
+                let existingDate = new Date(existingEvent.start);
+                if (existingDate.getDay() !== date.getDay()) return false;
+                
+                // Check for time overlap
+                let existingStart = new Date(existingEvent.start);
+                let existingEnd = new Date(existingEvent.end);
+                let newStart = new Date(event.event.start);
+                let newEnd = new Date(event.event.end);
+                
+                return (newStart < existingEnd && newEnd > existingStart);
+            });
+
+            if (overlappingEvents.length > 0) {
+                // Revert the event to its original position
+                event.revert();
+                showErrorToast(window.trans["Subject is already scheduled for this time slot."]);
+                return;
+            }
+
+            let data = new FormData();
+            data.append('day', days[date.getDay()]);
+            data.append('start_time', startTime24Hr);
+            data.append('end_time', endTime24Hr);
+            data.append('_method', 'PUT');
+            ajaxRequest('POST', baseUrl + '/timetable/' + timetable_id, data, null, null, function () {
+                showErrorToast(window.trans["The school hours dont match the current time slots Please select a valid time"]);
+            })
+        },
+        eventResize: function (event) {
+            let date = new Date(event.event.start);
+            let startTime24Hr = date.getHours() + ":" + getMinutes(date.getMinutes()) + ":" + date.getSeconds() + '0';
+            let end_time = new Date(event.event.end);
+            let endTime24Hr = end_time.getHours() + ":" + getMinutes(end_time.getMinutes()) + ":" + end_time.getSeconds() + '0';
+            let timetable_id = event.event.id;
+
+            // Check for overlapping events
+            let overlappingEvents = createTimetable.getEvents().filter(function(existingEvent) {
+                // Skip the current event being resized
+                if (existingEvent.id === event.event.id) return false;
+                
+                // Check if events are on the same day
+                let existingDate = new Date(existingEvent.start);
+                if (existingDate.getDay() !== date.getDay()) return false;
+                
+                // Check for time overlap
+                let existingStart = new Date(existingEvent.start);
+                let existingEnd = new Date(existingEvent.end);
+                let newStart = new Date(event.event.start);
+                let newEnd = new Date(event.event.end);
+                
+                return (newStart < existingEnd && newEnd > existingStart);
+            });
+
+            if (overlappingEvents.length > 0) {
+                // Revert the event to its original size
+                event.revert();
+                showErrorToast(window.trans["Subject is already scheduled for this time slot."]);
+                return;
+            }
+
+            let data = new FormData();
+            data.append('day', days[date.getDay()]);
+            data.append('start_time', startTime24Hr);
+            data.append('end_time', endTime24Hr);
+            data.append('_method', 'PUT');
+            ajaxRequest('POST', baseUrl + '/timetable/' + timetable_id, data)
+        }
+    })
+    createTimetable.render();
+
+    var teacherTimetable = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        contentHeight: 1500,
+        headerToolbar: {
+            start: '', // will normally be on the left. if RTL, will be on the right
+            center: '',
+            end: '',
+            // end: 'listDay,listWeek,timeGridWeek' // will normally be on the right. if RTL, will be on the left
+        },
+        views: {
+            listDay: {buttonText: 'Today'},
+            listWeek: {buttonText: 'List'},
+            timeGridWeek: {buttonText: 'Calendar'}
+        },
+        slotMinTime: "00:00:00",
+        slotMaxTime: "00:00:00",
+        firstDay: 1,
+        allDaySlot: false,
+        expandRows: true,
+        slotDuration: "01:00:00",
+        snapDuration: "00:10:00",
+        dayHeaderFormat: {
+            weekday: 'short'
+        },
+        editable: false,
+        droppable: false,
+        eventDurationEditable: false,
+        eventResizableFromStart: false,
+        eventDidMount: function (event) {
+            $(event.el).find(".fc-event-main .fc-event-main-frame .fc-event-title-container").append("<span class='mt-3'>" + event.event.extendedProps.class_section + "</span>");
+        },
+    })
+    teacherTimetable.render();
+    $(document).on('click', '.remove-timetable', function (e) {
+        e.preventDefault();
+        let timetable_id = $(this).data('id');
+        let event = createTimetable.getEventById(timetable_id)
+        showDeletePopupModal(baseUrl + '/timetable/' + timetable_id, {
+            successCallBack: function () {
+                event.remove();
+            }
+        })
+    })
 }
 let layout_direction = 'ltl';
 if (isRTL()) {
@@ -2580,23 +2812,29 @@ $('#subject-id').on('change', function () {
     let selectedSubjectId = $(this).val();
     let selectedClassSectionId = $(this).find('option:selected').data('class-section');
 
+    // Reset and hide lesson dropdown
     $("#topic-lesson-id").val("").attr('disabled', true).hide();
     $("#topic-lesson-id").find('option').hide();
 
+    // Show default options
+    $("#topic-lesson-id option[value='']").show();
+    $("#topic-lesson-id option[value='data-not-found']").hide();
+
     let lessonOptionsFound = false;
 
+    // Filter lessons based on selected subject
     $("#topic-lesson-id option").each(function () {
-        let lessonClassSectionId = $(this).data('class-section');
         let lessonSubjectId = $(this).data('subject');
-        // console.log("selectedClassSectionId :- ",selectedClassSectionId);
-        // console.log("lessonClassSectionId :- ",lessonClassSectionId);
         
         if (selectedSubjectId == lessonSubjectId) {
             $(this).show();
             lessonOptionsFound = true;
+        } else {
+            $(this).hide();
         }
     });
 
+    // Show appropriate message based on whether lessons were found
     if (!lessonOptionsFound) {
         $("#topic-lesson-id").val("data-not-found").attr('disabled', true).show();
     } else {
@@ -2661,10 +2899,10 @@ $("#stream_id").on("select2:selecting", function (e) {
     }, 1);
 
     let id = e.params.args.data.text;
-    id = id.replace(/\s+/g, "-");
+    id = id.replace(/\s+/g, "-").trim();
     setTimeout(function () {
-        $("#" + id + "-section-div").slideDown(500);
-    }, 3)
+        $("#" + $.escapeSelector(id) + "-section-div").slideDown(500);
+    }, 300)
 
 });
 
@@ -2678,10 +2916,10 @@ $('#stream_id').on("select2:unselecting", function (e) {
     }, 1);
 
     let id = e.params.args.data.text;
-    id = id.replace(" ", "-");
+    id = id.replace(/\s+/g, "-").trim();
     setTimeout(function () {
-        $("#" + id + "-section-div").slideUp(500);
-    }, 3)
+        $("#" + $.escapeSelector(id) + "-section-div").slideUp(500);
+    }, 300)
 });
 
 // $('#stream_id').on('change', function (e) {
@@ -2965,12 +3203,14 @@ $('#exam_result_session_year_id,#exam_reuslt_exam_name').on('change', function (
                          html += '<div class="d-flex justify-content-between mt-3"> <small class="font-weight-bold">'+window.trans['Class']+': '+value.class_name+'</small> <small class="font-weight-bold">'+per+'%</small> </div> <div class="progress progress-lg mt-2"> <div class="progress-bar '+bg_colors[index]+'" role="progressbar" style="width: '+per+'%" aria-valuenow="'+per+'" aria-valuemin="0" aria-valuemax="100"></div> </div>';
 
                     });
+                } else {
+                    html += '<div class="text-center"> <span class="text-small"> '+window.trans['no_exam_result_found']+' </span> </div>';
                 }
                 $('#class-progress-report').html(html);
             }
         });    
     } else {
-        $('#class-progress-report').html('');
+        $('#class-progress-report').html('<div class="text-center"> <span class="text-small"> '+window.trans['no_exam_result_found']+' </span> </div>');
     }
 })
 
@@ -3290,6 +3530,101 @@ $('#change-order-school-form-field').click(async function () {
             } else {
                 showErrorToast(data.message);
             }
+        }
+    });
+});
+
+// Payment gateway toggle interactions
+$(document).ready(function() {
+    // Stripe toggle
+    $('#Stripe').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#StripeForm').removeClass('d-none');
+            
+            // Uncheck other toggles
+            $('#Paystack').prop('checked', false);
+            $('#PaystackForm').addClass('d-none');
+            $('#Razorpay').prop('checked', false);
+            $('#RazorpayForm').addClass('d-none');
+            $('#Flutterwave').prop('checked', false);
+            $('#FlutterwaveForm').addClass('d-none');
+            
+            // For legacy dropdowns
+            $('#razorpay_status').val(0);
+            $('#paystack_status').val(0);
+            $('#flutterwave_status').val(0);
+            $('#bank_transfer_status').val(0);
+        } else {
+            $('#StripeForm').addClass('d-none');
+        }
+    });
+    
+    // Razorpay toggle
+    $('#Razorpay').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#RazorpayForm').removeClass('d-none');
+            
+            // Uncheck other toggles
+            $('#Stripe').prop('checked', false);
+            $('#StripeForm').addClass('d-none');
+            $('#Paystack').prop('checked', false);
+            $('#PaystackForm').addClass('d-none');
+            $('#Flutterwave').prop('checked', false);
+            $('#FlutterwaveForm').addClass('d-none');
+            
+            // For legacy dropdowns
+            $('#stripe_status').val(0);
+            $('#paystack_status').val(0);
+            $('#flutterwave_status').val(0);
+            $('#bank_transfer_status').val(0);
+        } else {
+            $('#RazorpayForm').addClass('d-none');
+        }
+    });
+    
+    // Paystack toggle
+    $('#Paystack').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#PaystackForm').removeClass('d-none');
+            
+            // Uncheck other toggles
+            $('#Stripe').prop('checked', false);
+            $('#StripeForm').addClass('d-none');
+            $('#Razorpay').prop('checked', false);
+            $('#RazorpayForm').addClass('d-none');
+            $('#Flutterwave').prop('checked', false);
+            $('#FlutterwaveForm').addClass('d-none');
+            
+            // For legacy dropdowns
+            $('#stripe_status').val(0);
+            $('#razorpay_status').val(0);
+            $('#flutterwave_status').val(0);
+            $('#bank_transfer_status').val(0);
+        } else {
+            $('#PaystackForm').addClass('d-none');
+        }
+    });
+    
+    // Flutterwave toggle
+    $('#Flutterwave').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#FlutterwaveForm').removeClass('d-none');
+            
+            // Uncheck other toggles
+            $('#Stripe').prop('checked', false);
+            $('#StripeForm').addClass('d-none');
+            $('#Razorpay').prop('checked', false);
+            $('#RazorpayForm').addClass('d-none');
+            $('#Paystack').prop('checked', false);
+            $('#PaystackForm').addClass('d-none');
+            
+            // For legacy dropdowns
+            $('#stripe_status').val(0);
+            $('#razorpay_status').val(0);
+            $('#paystack_status').val(0);
+            $('#bank_transfer_status').val(0);
+        } else {
+            $('#FlutterwaveForm').addClass('d-none');
         }
     });
 });

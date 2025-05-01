@@ -58,9 +58,9 @@ class LessonTopic extends Model {
                 // }
     
                 $teacherId = Auth::user()->id;
-                return $query->whereHas('lesson.subject_teacher', function ($query) use ($teacherId) {
+                return $query->whereHas('topic_commons.subject_teacher', function ($query) use ($teacherId) {
                     $query->where('teacher_id', $teacherId)
-                          ->whereColumn('class_section_id', 'lessons.class_section_id');
+                          ->whereColumn('class_section_id', 'class_section_id');
                 })->where('school_id',Auth::user()->school_id);
                 return $query->where('school_id', Auth::user()->school_id);
             }
@@ -84,6 +84,22 @@ class LessonTopic extends Model {
 
     public function lesson() {
         return $this->belongsTo(Lesson::class);
+    }
+
+    public function subject_teacher() {
+        return $this->hasMany(SubjectTeacher::class, 'class_subject_id','class_subject_id');
+    }
+
+    public function lesson_topics() {
+        return $this->hasMany(LessonTopic::class, 'lesson_id', 'lesson_id');
+    }
+
+    public function class_section() {
+        return $this->belongsTo(ClassSection::class, 'class_section_id', 'id');
+    }
+
+    public function class_subject() {
+        return $this->belongsTo(ClassSubject::class, 'class_subject_id', 'id');
     }
 
     // public function scopeLessonTopicTeachers($query)

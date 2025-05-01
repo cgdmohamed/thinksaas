@@ -60,14 +60,13 @@ class LessonTopicController extends Controller {
     }
 
     public function store(Request $request) {
-        // dd($request->all());
         ResponseService::noFeatureThenRedirect('Lesson Management');
         ResponseService::noPermissionThenRedirect('topic-create');
         $file_upload_size_limit = $this->cache->getSystemSettings('file_upload_size_limit');
         $validator = Validator::make($request->all(), [
             'class_section_id'      => 'required|array',
             'class_section_id.*'    => 'numeric',
-            'class_subject_id'      => 'required|numeric',
+            'subject_id'      => 'required|numeric',
             'lesson_id'             => 'required|numeric',
             'name'                  => ['required', new uniqueTopicInLesson($request->lesson_id)],
             'description'           => 'required',
@@ -131,21 +130,39 @@ class LessonTopicController extends Controller {
                 $lessonTopicData = array_merge($request->all(), ['class_section_id' => $section_id]);
             }
 
+            // Get the related class subject for each section
+            if ($request->class_section_id) {
+                foreach ($request->class_section_id as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with(['class_subject' => function ($q) use ($request) {
+                        $q->where('subject_id', $request->subject_id);
+                    }])->first();
+                }
+            }
+
+            $lessonTopicData['class_subject_id'] = $classSection->class_subject->id;
+            unset($lessonTopicData['subject_id']);
+            unset($lessonTopicData['user_id']);
+        
             // Create topics and store them
             $topics = $this->topic->create($lessonTopicData);
+            $lessonTopicCommonData = ['lesson_topics_id' => $topics->id];
+
+             // Create lesson topic common data for each section
+             foreach ($section_ids as $section_id) {
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->class_subjects->builder()
+                    ->where('class_id', $classSection->class->id)
+                    ->where('subject_id', $request->subject_id)
+                    ->first();
+        
+                $lessonTopicCommonData['class_section_id'] = $section_id;
+                $lessonTopicCommonData['class_subject_id'] = $classSubjects->id;
+                $this->topicCommon->create($lessonTopicCommonData);
+            }   
 
 
             $lessonFile = $this->files->model();
             $lessonModelAssociate = $lessonFile->modal()->associate($topics);
-
-            //create common topic data
-            foreach ($section_ids as $section_id) {
-                $topicCommonData = [
-                    'lesson_topics_id' => $topics->id,
-                    'class_section_id' => $section_id,
-                ];
-                $this->topicCommon->create($topicCommonData);
-            }
 
             // Create a file model instance
             if (!empty($lessonTopicFileData)) {
@@ -160,11 +177,11 @@ class LessonTopicController extends Controller {
             }
 
             $user = $this->student->builder()->with('user')->where('class_section_id', $request->class_section_id)->pluck('user_id');
-            $lesson = $this->lesson->builder()->where('id', $request->lesson_id)->pluck('name')->first();
-            $subjectName = $this->class_subjects->builder()->with('subject')->where('id', $request->class_subject_id)->first();
-           
+            $subjectTeacherData = $this->subjectTeacher->builder()->whereIn('class_section_id', $request->class_section_id)->where(['teacher_id' => $request->user_id, 'class_subject_id' => $classSubjects->id])->with('subject')->first(); // Get the Subject Teacher Data
+            $subjectName = $subjectTeacherData->subject_with_name; // Subject Name
+
             $title = 'Topic Alert !!!';
-            $body = 'A new topic has been added to the lesson "' . $lesson . '" under the subject "' . $subjectName->subject->name . '".';
+            $body = 'A new topic has been added to the lesson "' . $request->name . '" under the subject "' . $subjectName . '".';
             $type = "lesson";
            
             send_notification($user, $title, $body, $type);
@@ -257,7 +274,7 @@ class LessonTopicController extends Controller {
             ->when(request('class_subject_id') != null, function ($query) {
                 $class_subject_id = request('class_subject_id');
                 $query->where(function ($query) use ($class_subject_id) {
-                    $query->whereHas('lesson', function ($q) use ($class_subject_id) {
+                    $query->whereHas('topic_commons', function ($q) use ($class_subject_id) {
                         $q->where('class_subject_id', $class_subject_id);
                     });
                 });

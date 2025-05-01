@@ -123,6 +123,7 @@ class AuthController extends Controller {
             'gender'     => 'required',
             'dob'        => 'required',
             'email'      => 'required|email|unique:users,email,' . Auth::user()->id,
+            'image' => 'required|image|mimes:jpeg,png,jpg,svg,gif,webp',
 
             'current_address'   => 'required',
             'permanent_address' => 'required',

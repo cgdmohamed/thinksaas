@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Repositories\Exam\ExamInterface;
 use Illuminate\Support\Facades\Validator;
 use App\Repositories\ExamTimetable\ExamTimetableInterface;
+use Carbon\Carbon;
 
 class ExamTimetableController extends Controller {
     private ExamInterface $exam;
@@ -54,12 +55,18 @@ class ExamTimetableController extends Controller {
         $validator->after(function ($validator) use ($request) {
             $timetable = $request->timetable;
             $lastResultDate = $request->last_result_submission_date;
-            
+          
             if (!empty($timetable) && $lastResultDate) {
                 // Extract the latest date from the timetable
-                $latestExamDate = collect($timetable)->pluck('date')->max();
-                
-                // Check if last_result_submission_date is greater than the latest date in timetable
+                $latestExamDate = collect($timetable)
+                ->pluck('date')
+                ->map(fn($date) => Carbon::createFromFormat('d-m-Y', $date)) // Convert to Carbon
+                ->max() // Get the max date
+                ->format('Y-m-d'); 
+
+                $latestExamDate = Carbon::parse($latestExamDate)->format('Y-m-d');
+                $lastResultDate = Carbon::parse($lastResultDate)->format('Y-m-d');
+
                 if ($latestExamDate && $lastResultDate <= $latestExamDate) {
                     $validator->errors()->add(
                         'last_result_submission_date',

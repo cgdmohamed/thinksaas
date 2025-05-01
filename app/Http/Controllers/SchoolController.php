@@ -61,8 +61,7 @@ class SchoolController extends Controller
     private ExtraSchoolDataInterface $extraSchoolData;
     private FormFieldsInterface $formFields;
 
-    public function __construct(SchoolInterface $school, UserInterface $user, PackageInterface $package, CachingService $cache, SubscriptionService $subscriptionService, SchoolSettingInterface $schoolSettings, GuidanceInterface $guidance, FaqsInterface $faqs, SystemSettingInterface $systemSettings, SchoolInquiryInterface $schoolInquiry, ExtraSchoolDataInterface $extraSchoolData, FormFieldsInterface $formFields)
-    {
+    public function __construct(SchoolInterface $school, UserInterface $user, PackageInterface $package, CachingService $cache, SubscriptionService $subscriptionService, SchoolSettingInterface $schoolSettings, GuidanceInterface $guidance, FaqsInterface $faqs, SystemSettingInterface $systemSettings, SchoolInquiryInterface $schoolInquiry, ExtraSchoolDataInterface $extraSchoolData, FormFieldsInterface $formFields) {
         $this->schoolsRepository = $school;
         $this->userRepository = $user;
         $this->package = $package;
@@ -78,10 +77,9 @@ class SchoolController extends Controller
     }
 
 
-    public function index()
-    {
+    public function index() {
         ResponseService::noPermissionThenRedirect('schools-list');
-        $packages = $this->package->builder()->orderBy('rank')->get()->pluck('package_with_type', 'id')->toArray();
+        $packages = $this->package->builder()->orderBy('rank')->get()->pluck('package_with_type','id')->toArray();
 
         $baseUrl = url('/');
         // Remove the scheme (http:// or https://)
@@ -95,7 +93,7 @@ class SchoolController extends Controller
             $demoSchool = 0;
         }
 
-        $school_code = date('Y') . (($schools->id ?? 0) + 1);
+        $school_code = date('Y').(($schools->id ?? 0) + 1);
         $settings = $this->cache->getSystemSettings();
 
         $prefix = $settings['school_code_prefix'] ?? 'SCH';
@@ -110,8 +108,7 @@ class SchoolController extends Controller
     }
 
 
-    public function store(Request $request)
-    {
+    public function store(Request $request) {
         ResponseService::noAnyPermissionThenRedirect(['schools-create']);
 
         $fullDomain = $_SERVER['HTTP_HOST'];
@@ -123,14 +120,14 @@ class SchoolController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'school_name' => 'required',
+            'school_name'          => 'required',
             'school_support_email' => 'required|unique:schools,support_email',
             'school_support_phone' => 'required|numeric|digits_between:1,16',
-            'school_tagline' => 'required',
-            'school_address' => 'required',
-            'school_image' => 'required|mimes:jpg,jpeg,png,svg,svg+xml|max:2048',
-            'domain' => 'nullable|unique:schools,domain',
-            'school_code_prefix' => 'required'
+            'school_tagline'       => 'required',
+            'school_address'       => 'required',
+            'school_image'         => 'required|mimes:jpg,jpeg,png,svg,svg+xml|max:2048',
+            'domain'               => 'nullable|unique:schools,domain',
+            'school_code_prefix'   => 'required'
 
         ]);
         if ($validator->fails()) {
@@ -140,26 +137,27 @@ class SchoolController extends Controller
             $school_code = $request->school_code_prefix . $request->school_code;
             $settings = $this->cache->getSystemSettings();
 
-            if (!$settings['email_verified']) {
+            if(!$settings['email_verified']) {
                 ResponseService::validationError('Please contact the administrator to activate the email verification.');
             }
 
             DB::beginTransaction();
 
             $school_data = array(
-                'name' => $request->school_name,
-                'address' => $request->school_address,
+                'name'          => $request->school_name,
+                'address'       => $request->school_address,
                 'support_email' => $request->school_support_email,
                 'support_phone' => $request->school_support_phone,
-                'tagline' => $request->school_tagline,
-                'logo' => $request->file('school_image'),
-                'domain' => $request->domain,
-                'code' => $school_code,
-                'type' => "custom",
-                'domain_type' => $request->domain_type,
+                'tagline'       => $request->school_tagline,
+                'logo'          => $request->file('school_image'),
+                'domain'        => $request->domain,
+                'code'          => $school_code,
+                'type'          => "custom",
+                'domain_type'   => $request->domain_type,
             );
             // Call store function of Schools Repository
             $schoolData = $this->schoolsRepository->create($school_data);
+
 
 
             $school_name = str_replace('.', '_', $request->school_name);
@@ -167,12 +165,12 @@ class SchoolController extends Controller
 
             $admin_data = array(
                 'first_name' => "School",
-                'last_name' => "Admin",
-                'mobile' => $request->school_support_phone,
-                'email' => $request->school_support_email,
-                'password' => Hash::make($request->school_support_phone),
-                'school_id' => $schoolData->id,
-                'image' => $request->file('school_image')
+                'last_name'  => "Admin",
+                'mobile'     => $request->school_support_phone,
+                'email'      => $request->school_support_email,
+                'password'   => Hash::make($request->school_support_phone),
+                'school_id'  => $schoolData->id,
+                'image'      => $request->file('school_image')
             );
 
 
@@ -212,10 +210,10 @@ class SchoolController extends Controller
 
                     // Now add the data to the array
                     $extraDetails[] = array(
-                        'school_id' => $schoolData->id,
+                        'school_id'         => $schoolData->id,
                         'school_inquiry_id' => null,
-                        'form_field_id' => $fields['form_field_id'],
-                        'data' => $data,
+                        'form_field_id'     => $fields['form_field_id'],
+                        'data'              => $data,
                     );
                 }
             }
@@ -226,7 +224,7 @@ class SchoolController extends Controller
             }
 
             // Update Admin id to School Data
-            $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id, 'database_name' => $database_name]);
+            $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id,'database_name' => $database_name]);
 
             $schoolService = app(SchoolDataService::class);
 
@@ -241,7 +239,7 @@ class SchoolController extends Controller
             if ($request->assign_package) {
                 // Create subscription plan
                 $this->subscriptionService->createSubscription($request->assign_package, $schoolData->id, null, 1);
-                $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'), $schoolData->id);
+                $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$schoolData->id);
 
             }
 
@@ -314,8 +312,7 @@ class SchoolController extends Controller
         return $templateContent;
     }
 
-    public function show($id)
-    {
+    public function show() {
         ResponseService::noPermissionThenRedirect('schools-list');
         $offset = request('offset', 0);
         $limit = request('limit', 10);
@@ -326,7 +323,6 @@ class SchoolController extends Controller
         $showDeleted = request('show_deleted');
         $today_date = Carbon::now()->format('Y-m-d');
 
-        // Fetch the school along with books and other related data
         $school = School::with(['books', 'user:id,first_name,last_name,email,image,mobile', 'subscription.package'])
             ->findOrFail($id);
 
@@ -347,6 +343,8 @@ class SchoolController extends Controller
                             ->orWhere('support_phone', 'LIKE', "%$search%")
                             ->orWhere('tagline', 'LIKE', "%$search%")
                             ->orWhere('address', 'LIKE', "%$search%")
+                            ->orWhere('domain', 'LIKE', "%$search%")
+                            ->orWhere('code', 'LIKE', "%$search%")
                             ->orWhereHas('user', function ($query) use ($search) {
                                 $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", "%$search%");
                             });
@@ -357,6 +355,8 @@ class SchoolController extends Controller
                             ->orWhere('support_phone', 'LIKE', "%$search%")
                             ->orWhere('tagline', 'LIKE', "%$search%")
                             ->orWhere('address', 'LIKE', "%$search%")
+                            ->orWhere('domain', 'LIKE', "%$search%")
+                            ->orWhere('code', 'LIKE', "%$search%")
                             ->orWhereHas('user', function ($query) use ($search) {
                                 $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", "%$search%");
                             });
@@ -367,8 +367,8 @@ class SchoolController extends Controller
             });
 
         if ($package_id) {
-            $sql->whereHas('subscription', function ($q) use ($package_id, $today_date) {
-                $q->where('package_id', $package_id)->whereDate('start_date', '<=', $today_date)->whereDate('end_date', '>=', $today_date);
+            $sql->whereHas('subscription',function($q) use($package_id, $today_date) {
+                $q->where('package_id',$package_id)->whereDate('start_date','<=',$today_date)->whereDate('end_date','>=',$today_date);
             });
         }
 
@@ -383,30 +383,44 @@ class SchoolController extends Controller
         $rows = array();
         $no = 1;
 
+        $baseUrl = url('/');
+        $baseUrlWithoutScheme = preg_replace("(^https?://)", "", $baseUrl);
+        $baseUrlWithoutScheme = str_replace("www.", "", $baseUrlWithoutScheme);
+
         foreach ($res as $row) {
             $operate = '';
             if ($showDeleted) {
                 //Show Restore and Hard Delete Buttons
-                $operate = BootstrapTableService::menuRestoreButton('restore', route('schools.restore', $row->id));
-                $operate .= BootstrapTableService::menuTrashButton('delete', route('schools.trash', $row->id));
+                $operate = BootstrapTableService::menuRestoreButton('restore',route('schools.restore', $row->id));
+                $operate .= BootstrapTableService::menuTrashButton('delete',route('schools.trash', $row->id));
             } else {
-                $operate = BootstrapTableService::menuButton('change_admin', "#", ['update-admin-data'], ['data-toggle' => "modal", 'data-target' => "#editAdminModal"]);
+                $operate = BootstrapTableService::menuButton('change_admin',"#",['update-admin-data'],['data-toggle' => "modal", 'data-target' => "#editAdminModal"]);
 
                 if ($row->status == 0) {
-                    $operate .= BootstrapTableService::menuButton('activate_school', "#", ["change-school-status"], ['data-id' => $row->id]);
+                    $operate .= BootstrapTableService::menuButton('activate_school',"#",["change-school-status"],['data-id' => $row->id]);
                 } else {
-                    $operate .= BootstrapTableService::menuButton('inactive_school', "#", ["change-school-status"], ['data-id' => $row->id]);
+                    $operate .= BootstrapTableService::menuButton('inactive_school',"#",["change-school-status"],['data-id' => $row->id]);
                 }
-                $operate .= BootstrapTableService::menuEditButton('edit', route('schools.update', $row->id));
-                $operate .= BootstrapTableService::menuDeleteButton('delete', route('schools.destroy', $row->id));
+                $operate .= BootstrapTableService::menuEditButton('edit',route('schools.update', $row->id));
+                $operate .= BootstrapTableService::menuDeleteButton('delete',route('schools.destroy', $row->id));
             }
 
 
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
             $tempRow['active_plan'] = '-';
+
+            // Generate school URL based on domain type
+            if ($row->domain_type == 'default') {
+                $tempRow['school_domain'] = $row->domain;
+                $tempRow['school_url'] = 'https://' . $row->domain . '.' . $baseUrlWithoutScheme;
+            } else {
+                $tempRow['school_domain'] = $row->domain;
+                $tempRow['school_url'] = 'https://' . $row->domain;
+            }
+
             if (count($row->subscription)) {
-                $package = $row->subscription()->whereDate('start_date', '<=', $today_date)->whereDate('end_date', '>=', $today_date)->latest()->first();
+                $package = $row->subscription()->whereDate('start_date','<=',$today_date)->whereDate('end_date','>=',$today_date)->latest()->first();
                 if ($package) {
                     $tempRow['active_plan'] = $package->name;
                 }
@@ -419,9 +433,9 @@ class SchoolController extends Controller
                 $data = '';
                 if ($field->form_field->type == 'checkbox') {
                     $data = json_decode($field->data);
-                } else if ($field->form_field->type == 'file') {
-                    $data = '<a href="' . Storage::url($field->data) . '" target="_blank">DOC</a>';
-                } else if ($field->form_field->type == 'dropdown') {
+                } else if($field->form_field->type == 'file') {
+                    $data = '<a href="'.Storage::url($field->data).'" target="_blank">DOC</a>';
+                } else if($field->form_field->type == 'dropdown') {
                     $data = $field->form_field->default_values;
                     $data = $field->data ?? '';
                 } else {
@@ -445,32 +459,31 @@ class SchoolController extends Controller
         return view('schools.show', compact('school', 'books'));
     }
 
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id) {
         ResponseService::noPermissionThenSendJson(['schools-edit']);
         $validator = Validator::make($request->all(), [
-            'edit_school_name' => 'required',
+            'edit_school_name'          => 'required',
             'edit_school_support_email' => 'required|unique:schools,support_email,' . $id,
             'edit_school_support_phone' => 'required|numeric|digits_between:1,16',
-            'edit_school_tagline' => 'required',
-            'edit_school_address' => 'required',
-            'edit_school_image' => 'nullable|mimes:jpg,jpeg,png,svg,svg+xml|max:2048',
-            'edit_domain' => 'nullable|unique:schools,domain,' . $id
+            'edit_school_tagline'       => 'required',
+            'edit_school_address'       => 'required',
+            'edit_school_image'         => 'nullable|mimes:jpg,jpeg,png,svg,svg+xml|max:2048',
+            'edit_domain'               => 'nullable|unique:schools,domain,'.$id
         ]);
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
         try {
-            $school_database = School::where('id', $id)->pluck('database_name')->first();
+            $school_database = School::where('id',$id)->pluck('database_name')->first();
 
             $school_data = array(
-                'name' => $request->edit_school_name,
-                'address' => $request->edit_school_address,
+                'name'          => $request->edit_school_name,
+                'address'       => $request->edit_school_address,
                 'support_email' => $request->edit_school_support_email,
                 'support_phone' => $request->edit_school_support_phone,
-                'tagline' => $request->edit_school_tagline,
-                'domain_type' => $request->edit_domain_type,
-                'domain' => $request->edit_domain
+                'tagline'       => $request->edit_school_tagline,
+                'domain_type'   => $request->edit_domain_type,
+                'domain'        => $request->edit_domain
             );
 
             if ($request->hasFile('edit_school_image')) {
@@ -484,18 +497,19 @@ class SchoolController extends Controller
 
             $extraFields = $request->edit_extra_fields;
 
-            if (isset($extraFields) && is_array($extraFields)) {
+            if (isset($extraFields) && is_array($extraFields))
+            {
                 foreach ($extraFields as $fields) {
                     if ($fields['input_type'] == 'file') {
                         if (isset($fields['data']) && $fields['data'] instanceof UploadedFile) {
 
                             $image = UploadService::upload($fields['data'], 'school');
                             $schoolDataArray[] = array(
-                                'id' => $fields['id'] ?? null, // Handle nullable 'id'
+                                'id'                => $fields['id'] ?? null, // Handle nullable 'id'
                                 'school_inquiry_id' => null,
-                                'school_id' => $school->id,
-                                'form_field_id' => $fields['form_field_id'],
-                                'data' => $image, // Store the filename or handle upload
+                                'school_id'         => $school->id,
+                                'form_field_id'     => $fields['form_field_id'],
+                                'data'              => $image, // Store the filename or handle upload
                             );
                         }
                     } else {
@@ -509,11 +523,11 @@ class SchoolController extends Controller
                         }
 
                         $schoolDataArray[] = array(
-                            'id' => $fields['id'] ?? null, // Handle nullable 'id'
+                            'id'                => $fields['id'] ?? null, // Handle nullable 'id'
                             'school_inquiry_id' => null,
-                            'school_id' => $school->id,
-                            'form_field_id' => $fields['form_field_id'],
-                            'data' => $data, // Ensure data is a string or JSON
+                            'school_id'         => $school->id,
+                            'form_field_id'     => $fields['form_field_id'],
+                            'data'              => $data, // Ensure data is a string or JSON
                         );
                     }
                 }
@@ -553,66 +567,65 @@ class SchoolController extends Controller
 
             $schoolSettingData = array(
                 [
-                    'name' => 'school_name',
-                    'data' => $request->edit_school_name,
-                    'type' => 'string',
+                    'name'      => 'school_name',
+                    'data'      => $request->edit_school_name,
+                    'type'      => 'string',
                     'school_id' => $request->edit_id,
                 ],
                 [
-                    'name' => 'school_email',
-                    'data' => $request->edit_school_support_email,
-                    'type' => 'string',
+                    'name'      => 'school_email',
+                    'data'      => $request->edit_school_support_email,
+                    'type'      => 'string',
                     'school_id' => $request->edit_id
                 ],
                 [
-                    'name' => 'school_phone',
-                    'data' => $request->edit_school_support_phone,
-                    'type' => 'number',
+                    'name'      => 'school_phone',
+                    'data'      => $request->edit_school_support_phone,
+                    'type'      => 'number',
                     'school_id' => $request->edit_id
                 ],
                 [
-                    'name' => 'school_tagline',
-                    'data' => $request->edit_school_tagline,
-                    'type' => 'string',
+                    'name'      => 'school_tagline',
+                    'data'      => $request->edit_school_tagline,
+                    'type'      => 'string',
                     'school_id' => $request->edit_id
                 ],
                 [
-                    'name' => 'school_address',
-                    'data' => $request->edit_school_address,
-                    'type' => 'string',
+                    'name'      => 'school_address',
+                    'data'      => $request->edit_school_address,
+                    'type'      => 'string',
                     'school_id' => $request->edit_id
                 ],
                 [
-                    'name' => 'domain',
-                    'data' => $request->edit_domain,
-                    'type' => 'string',
+                    'name'      => 'domain',
+                    'data'      => $request->edit_domain,
+                    'type'      => 'string',
                     'school_id' => $request->edit_id
-                ]
-            );
+                ]);
 
-            if ($request->hasFile('edit_school_image')) {
-                $schoolSettingData[] = [
-                    'name' => 'vertical_logo',
-                    'data' => $request->file('edit_school_image')->store('school', 'public'),
-                    'type' => 'file',
-                    'school_id' => $request->edit_id
-                ];
-            }
-            SchoolSetting::upsert($schoolSettingData, ['name', 'school_id'], ['data', 'school_id', 'type']);
-            $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'), $request->edit_id);
+                if ($request->hasFile('edit_school_image')) {
+                    $schoolSettingData[] = [
+                        'name'      => 'vertical_logo',
+                        'data'      => $request->file('edit_school_image')->store('school','public'),
+                        'type'      => 'file',
+                        'school_id' => $request->edit_id
+                    ];
+                }
+                SchoolSetting::upsert($schoolSettingData,['name','school_id'],['data','school_id','type']);
+                $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$request->edit_id);
 
-            DB::setDefaultConnection('mysql');
-            Session::forget('school_database_name');
-            Session::flush();
-            Session::put('school_database_name', null);
+                DB::setDefaultConnection('mysql');
+                Session::forget('school_database_name');
+                Session::flush();
+                Session::put('school_database_name', null);
 
-            // Assign package
-            if ($request->assign_package) {
-                // Create subscription plan
-                $this->subscriptionService->createSubscription($request->assign_package, $request->edit_id, null, 1);
-                $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'), $request->edit_id);
+                // Assign package
+                if ($request->assign_package) {
+                    // Create subscription plan
+                    $this->subscriptionService->createSubscription($request->assign_package, $request->edit_id, null, 1);
+                    $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$request->edit_id);
 
-            }
+                }
 
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
@@ -621,12 +634,11 @@ class SchoolController extends Controller
         }
     }
 
-    public function destroy($id)
-    {
+    public function destroy($id) {
         ResponseService::noPermissionThenSendJson('schools-delete');
         try {
-            $school = $this->schoolsRepository->update($id, ['status' => 0]);
-            User::withTrashed()->where('id', $school->admin_id)->delete();
+            $school = $this->schoolsRepository->update($id,['status' => 0]);
+            User::withTrashed()->where('id',$school->admin_id)->delete();
             $this->schoolsRepository->deleteById($id);
             ResponseService::successResponse('Data Deleted Successfully');
         } catch (Throwable $e) {
@@ -635,8 +647,7 @@ class SchoolController extends Controller
         }
     }
 
-    public function restore(int $id)
-    {
+    public function restore(int $id) {
         ResponseService::noPermissionThenSendJson('schools-delete');
         try {
             $this->schoolsRepository->findOnlyTrashedById($id)->restore();
@@ -650,23 +661,21 @@ class SchoolController extends Controller
         }
     }
 
-    public function trash($id)
-    {
+    public function trash($id) {
         ResponseService::noPermissionThenSendJson('schools-delete');
         try {
-            $school = $this->schoolsRepository->builder()->withTrashed()->where('id', $id)->first();
+            $school = $this->schoolsRepository->builder()->withTrashed()->where('id',$id)->first();
             DB::statement("DROP DATABASE IF EXISTS `{$school->database_name}`");
             Storage::disk('public')->deleteDirectory($school->id);
-            User::where('id', $school->admin_id)->withTrashed()->forceDelete();
+            User::where('id',$school->admin_id)->withTrashed()->forceDelete();
             ResponseService::successResponse("Data Deleted Permanently");
         } catch (Throwable $e) {
-            ResponseService::logErrorResponse($e, '', 'cannot_delete_because_data_is_associated_with_other_data');
+            ResponseService::logErrorResponse($e,'','cannot_delete_because_data_is_associated_with_other_data');
             ResponseService::errorResponse();
         }
     }
 
-    public function adminSearch(Request $request)
-    {
+    public function adminSearch(Request $request) {
         $adminData = $this->userRepository->getTrashedAdminData($request->email);
         if (!empty($adminData)) {
             $response = ['error' => false, 'data' => $adminData];
@@ -676,15 +685,14 @@ class SchoolController extends Controller
         return response()->json($response);
     }
 
-    public function updateAdmin(Request $request)
-    {
+    public function updateAdmin(Request $request) {
         ResponseService::noAnyPermissionThenRedirect(['schools-edit']);
         $validator = Validator::make($request->all(), [
-            "edit_id" => 'required',
-            "edit_admin_email" => 'required|email|unique:users,email,' . $request->edit_admin_id,
+            "edit_id"               => 'required',
+            "edit_admin_email"      => 'required|email|unique:users,email,' . $request->edit_admin_id,
             "edit_admin_first_name" => 'required',
-            "edit_admin_last_name" => 'required',
-            "edit_admin_contact" => 'required|digits_between:1,16',
+            "edit_admin_last_name"  => 'required',
+            "edit_admin_contact"    => 'required|digits_between:1,16',
         ]);
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
@@ -708,20 +716,20 @@ class SchoolController extends Controller
             // }
 
             $admin_data = array(
-                'school_id' => $request->edit_id,
-                'id' => $request->edit_admin_id,
-                'email' => $request->edit_admin_email,
+                'school_id'  => $request->edit_id,
+                'id'         => $request->edit_admin_id,
+                'email'      => $request->edit_admin_email,
                 'first_name' => $request->edit_admin_first_name,
-                'last_name' => $request->edit_admin_last_name,
-                'contact' => $request->edit_admin_contact,
-                'reset_password' => $request->reset_password,
+                'last_name'  => $request->edit_admin_last_name,
+                'contact'    => $request->edit_admin_contact,
+                'reset_password'    => $request->reset_password,
             );
             $this->schoolsRepository->updateSchoolAdmin($admin_data, $request->edit_admin_image); // Call updateSchoolAdmin function of Schools Repository
 
             // Re-send Email by Super Admin
-            if ($request->resend_email) {
+            if($request->resend_email) {
                 $settings = $this->cache->getSystemSettings();
-                $users = $this->schoolsRepository->builder()->with("user")->where('id', $request->edit_id)->first();
+                $users = $this->schoolsRepository->builder()->with("user")->where('id',$request->edit_id)->first();
 
                 $email_body = $this->replacePlaceholders($request, $users->user, $settings, $users->code);
 
@@ -829,8 +837,7 @@ class SchoolController extends Controller
         }
     }
 
-    public function changeStatus($id)
-    {
+    public function changeStatus($id) {
         ResponseService::noAnyPermissionThenRedirect(['schools-edit']);
         try {
             DB::beginTransaction();
@@ -857,8 +864,7 @@ class SchoolController extends Controller
         }
     }
 
-    public function searchAdmin(Request $request)
-    {
+    public function searchAdmin(Request $request) {
         ResponseService::noAnyPermissionThenRedirect(['schools-create', 'schools-edit']);
         $parent = $this->userRepository->builder()->role('School Admin')->withTrashed()->where(function ($query) use ($request) {
             $query->where('email', 'like', '%' . $request->email . '%')
@@ -869,25 +875,24 @@ class SchoolController extends Controller
         if (!empty($parent)) {
             $response = [
                 'error' => false,
-                'data' => $parent
+                'data'  => $parent
             ];
         } else {
             $response = [
-                'error' => true,
+                'error'   => true,
                 'message' => trans('no_data_found')
             ];
         }
         return response()->json($response);
     }
 
-    public function registration(Request $request)
-    {
+    public function registration(Request $request) {
         $validator = Validator::make($request->all(), [
-            'school_name' => 'required',
-            'school_email' => 'required',
-            'school_phone' => 'required|numeric|digits_between:1,16',
-            'school_tagline' => 'required',
-            'school_address' => 'required'
+            'school_name'          => 'required',
+            'school_email'         => 'required',
+            'school_phone'         => 'required|numeric|digits_between:1,16',
+            'school_tagline'       => 'required',
+            'school_address'       => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -922,17 +927,18 @@ class SchoolController extends Controller
         try {
             $settings = $this->cache->getSystemSettings();
 
-            if (isset($settings['school_inquiry']) && ($settings['school_inquiry'] == 1)) {
+            if(isset($settings['school_inquiry']) && ($settings['school_inquiry'] == 1) )
+            {
                 DB::beginTransaction();
 
                 $school_data = array(
-                    'school_name' => $request->school_name,
-                    'school_email' => $request->school_email,
-                    'school_phone' => $request->school_phone,
-                    'school_tagline' => $request->school_tagline,
-                    'school_address' => $request->school_address,
-                    'date' => Carbon::now()->format('Y-m-d'),
-                    'status' => 0,
+                    'school_name'       => $request->school_name,
+                    'school_email'      => $request->school_email,
+                    'school_phone'      => $request->school_phone,
+                    'school_tagline'    => $request->school_tagline,
+                    'school_address'    => $request->school_address,
+                    'date'              => Carbon::now()->format('Y-m-d'),
+                    'status'            => 0,
                 );
 
                 $schoolData = $this->schoolInquiry->create($school_data);
@@ -970,9 +976,9 @@ class SchoolController extends Controller
                         // Now add the data to the array
                         $extraDetails[] = array(
                             'school_inquiry_id' => $schoolData->id,
-                            'school_id' => null,
-                            'form_field_id' => $fields['form_field_id'],
-                            'data' => $data,
+                            'school_id'         => null,
+                            'form_field_id'     => $fields['form_field_id'],
+                            'data'              => $data,
                         );
                     }
                 }
@@ -986,25 +992,25 @@ class SchoolController extends Controller
 
                 ResponseService::successResponse(trans('School Inquiry Sent to Admin, wait for Admin Approval to successfully registered.'));
 
-            } else {
+            }else{
                 DB::beginTransaction();
                 $schools = $this->schoolsRepository->builder()->latest()->first();
-                $school_code = date('Y') . (($schools->id ?? 0) + 1);
+                $school_code = date('Y').(($schools->id ?? 0) + 1);
                 $settings = $this->cache->getSystemSettings();
                 $prefix = $settings['school_code_prefix'] ?? 'SCH';
                 $school_code = $prefix . $school_code;
                 $school_data = array(
-                    'name' => $request->school_name,
-                    'address' => $request->school_address,
+                    'name'          => $request->school_name,
+                    'address'       => $request->school_address,
                     'support_email' => $request->school_email,
                     'support_phone' => $request->school_phone,
-                    'tagline' => $request->school_tagline,
-                    'logo' => 'no_image_available.jpg',
-                    'status' => 1,
-                    'code' => $school_code
+                    'tagline'       => $request->school_tagline,
+                    'logo'          => 'no_image_available.jpg',
+                    'status'        => 1,
+                    'code'          => $school_code
                 );
 
-                if ($settings['email_verified'] == 0) {
+                if($settings['email_verified'] == 0) {
                     ResponseService::errorResponse(trans('Please contact the super admin to configure the email.'));
                 }
 
@@ -1012,12 +1018,12 @@ class SchoolController extends Controller
                 $schoolData = $this->schoolsRepository->create($school_data);
                 $admin_data = array(
                     'first_name' => 'School',
-                    'last_name' => 'Admin',
-                    'mobile' => $request->school_phone,
-                    'email' => $request->school_email,
-                    'password' => Hash::make($request->school_phone),
-                    'school_id' => $schoolData->id,
-                    'image' => 'dummy_logo.jpg'
+                    'last_name'  => 'Admin',
+                    'mobile'     => $request->school_phone,
+                    'email'      => $request->school_email,
+                    'password'   => Hash::make($request->school_phone),
+                    'school_id'  => $schoolData->id,
+                    'image'      => 'dummy_logo.jpg'
                 );
 
                 $user = $this->userRepository->create($admin_data);
@@ -1053,9 +1059,9 @@ class SchoolController extends Controller
                         // Now add the data to the array
                         $extraDetails[] = array(
                             'school_inquiry_id' => null,
-                            'school_id' => $schoolData->id,
-                            'form_field_id' => $fields['form_field_id'],
-                            'data' => $data,
+                            'school_id'         => $schoolData->id,
+                            'form_field_id'     => $fields['form_field_id'],
+                            'data'              => $data,
                         );
                     }
                 }
@@ -1078,7 +1084,7 @@ class SchoolController extends Controller
                 if ($request->trial_package) {
 
                     $this->subscriptionService->createSubscription($request->trial_package, $schoolData->id, null, 1);
-                    $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'), $schoolData->id);
+                    $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$schoolData->id);
                 }
 
                 $settings = $this->cache->getSystemSettings();
@@ -1113,10 +1119,10 @@ class SchoolController extends Controller
     public function sendMailIndex()
     {
         ResponseService::noAnyPermissionThenRedirect(['custom-school-email']);
-        $schools = $this->schoolsRepository->builder()->pluck('name', 'id');
+        $schools = $this->schoolsRepository->builder()->pluck('name','id');
 
 
-        return view('settings.custom_email', compact('schools'));
+        return view('settings.custom_email',compact('schools'));
 
     }
 
@@ -1146,7 +1152,7 @@ class SchoolController extends Controller
     public function sendCustomEmail($school_id, $data, $subject)
     {
         try {
-            $school = $this->schoolsRepository->builder()->where('id', $school_id)->with('user')->first();
+            $school = $this->schoolsRepository->builder()->where('id',$school_id)->with('user')->first();
             $systemSettings = $this->cache->getSystemSettings();
             $placeholders = [
                 '{school_name}' => $school->name,
@@ -1166,9 +1172,9 @@ class SchoolController extends Controller
             }
 
             $emailBody = [
-                'subject' => $subject,
-                'email' => $school->user->email,
-                'email_body' => $data
+                'subject'     => $subject,
+                'email'       => $school->user->email,
+                'email_body'  => $data
             ];
 
             Mail::send('students.email', $emailBody, static function ($message) use ($emailBody) {
@@ -1190,34 +1196,34 @@ class SchoolController extends Controller
             DB::beginTransaction();
 
             $schools = $this->schoolsRepository->builder()->latest()->first();
-            $school_code = date('Y') . (($schools->id ?? 0) + 1);
+            $school_code = date('Y').(($schools->id ?? 0) + 1);
             $settings = $this->cache->getSystemSettings();
             $prefix = $settings['school_prefix'] ?? 'SCH';
             $school_code = $prefix . $school_code;
 
             $school_data = array(
-                'name' => 'Demo School',
-                'address' => '123 Demo Street',
+                'name'          => 'Demo School',
+                'address'       => '123 Demo Street',
                 'support_email' => 'demo@school.com',
                 'support_phone' => '1234567890',
-                'tagline' => 'Demo Tagline',
-                'domain' => 'demo',
-                'code' => $school_code,
-                'type' => 'demo',
-                'domain_type' => 'default',
-                'status' => 1,
+                'tagline'       => 'Demo Tagline',
+                'domain'        => 'demo',
+                'code'          =>  $school_code,
+                'type'          => 'demo',
+                'domain_type'   => 'default',
+                'status'        => 1,
             );
             // Call store function of Schools Repository
             $schoolData = $this->schoolsRepository->create($school_data);
 
             $admin_data = array(
                 'first_name' => 'Demo',
-                'last_name' => 'Admin',
-                'mobile' => '1234567890',
-                'email' => 'demo@school.com',
-                'password' => Hash::make('1234567890'),
-                'school_id' => $schoolData->id,
-                'image' => 'dummy_logo.jpg',
+                'last_name'  => 'Admin',
+                'mobile'     => '1234567890',
+                'email'      => 'demo@school.com',
+                'password'   => Hash::make('1234567890'),
+                'school_id'  => $schoolData->id,
+                'image'      => 'dummy_logo.jpg',
                 'email_verified_at' => $schoolData->type == 'demo' ? Carbon::now() : null,
                 'two_factor_enabled' => 0,
             );
@@ -1255,8 +1261,7 @@ class SchoolController extends Controller
 
     }
 
-    public function schoolInquiryIndex()
-    {
+    public function schoolInquiryIndex() {
         ResponseService::noPermissionThenRedirect('schools-list');
 
         $baseUrl = url('/');
@@ -1265,16 +1270,15 @@ class SchoolController extends Controller
         $baseUrlWithoutScheme = str_replace("www.", "", $baseUrlWithoutScheme);
 
         $schools = $this->schoolsRepository->builder()->latest()->first();
-        $school_code = date('Y') . (($schools->id ?? 0) + 1);
+        $school_code = date('Y').(($schools->id ?? 0) + 1);
         $settings = $this->cache->getSystemSettings();
         $prefix = $settings['school_prefix'] ?? 'SCH';
         $extraFields = $this->formFields->defaultModel()->orderBy('rank')->get();
 
-        return view('schools.school_inquiry', compact('baseUrlWithoutScheme', 'school_code', 'prefix', 'extraFields'));
+        return view('schools.school_inquiry', compact('baseUrlWithoutScheme','school_code','prefix','extraFields'));
     }
 
-    public function schoolInquiryList()
-    {
+    public function schoolInquiryList() {
         ResponseService::noPermissionThenRedirect('schools-list');
         $offset = request('offset', 0);
         $limit = request('limit', 10);
@@ -1330,9 +1334,9 @@ class SchoolController extends Controller
                 $data = '';
                 if ($field->form_field->type == 'checkbox') {
                     $data = json_decode($field->data);
-                } else if ($field->form_field->type == 'file') {
-                    $data = '<a href="' . Storage::url($field->data) . '" target="_blank">DOC</a>';
-                } else if ($field->form_field->type == 'dropdown') {
+                } else if($field->form_field->type == 'file') {
+                    $data = '<a href="'.Storage::url($field->data).'" target="_blank">DOC</a>';
+                } else if($field->form_field->type == 'dropdown') {
                     $data = $field->form_field->default_values;
                     $data = $field->data ?? '';
                 } else {
@@ -1353,13 +1357,13 @@ class SchoolController extends Controller
     {
         ResponseService::noAnyPermissionThenRedirect(['schools-create']);
         $validator = Validator::make($request->all(), [
-            'school_name' => 'required',
+            'school_name'          => 'required',
             'school_support_email' => 'required|unique:schools,support_email',
             'school_support_phone' => 'required|numeric|digits_between:1,16',
-            'school_tagline' => 'required',
-            'school_address' => 'required',
-            'domain' => 'nullable|unique:schools,domain',
-            'school_code_prefix' => 'required'
+            'school_tagline'       => 'required',
+            'school_address'       => 'required',
+            'domain'               => 'nullable|unique:schools,domain',
+            'school_code_prefix'   => 'required'
 
         ]);
         if ($validator->fails()) {
@@ -1369,40 +1373,41 @@ class SchoolController extends Controller
             $settings = $this->cache->getSystemSettings();
             $schoolService = app(SchoolDataService::class);
 
-            if ($settings['email_verified'] == 0) {
+            if($settings['email_verified'] == 0) {
                 ResponseService::errorResponse(trans('Kindly first configure the email, then the school will be approved.'));
             }
 
-            if ($request->status == 1) {
+            if($request->status == 1)
+            {
                 $school_code = $request->school_code_prefix . $request->school_code;
                 // dd($school_code);
                 DB::beginTransaction();
 
                 $school_data = array(
-                    'name' => $request->school_name,
-                    'address' => $request->school_address,
+                    'name'          => $request->school_name,
+                    'address'       => $request->school_address,
                     'support_email' => $request->school_support_email,
                     'support_phone' => $request->school_support_phone,
-                    'tagline' => $request->school_tagline,
-                    'domain' => "demo",
-                    'code' => $school_code,
-                    'type' => "custom",
-                    'domain_type' => "default",
+                    'tagline'       => $request->school_tagline,
+                    'domain'        => "demo",
+                    'code'          => $school_code,
+                    'type'          => "custom",
+                    'domain_type'   => "default",
                 );
                 // Call store function of Schools Repository
                 $schoolData = $this->schoolsRepository->create($school_data);
 
 
-                $school_name = str_replace('.', '_', $request->school_name);
-                $database_name = 'thinkhup_school_' . $schoolData->id . '_' . strtolower(strtok($school_name, " "));
+                $school_name = str_replace('.','_',$request->school_name);
+                $database_name = 'thinkhup_saas_'.$schoolData->id.'_'.strtolower(strtok($school_name," "));
 
                 $admin_data = array(
                     'first_name' => 'School',
-                    'last_name' => 'Admin',
-                    'mobile' => $request->school_support_phone,
-                    'email' => $request->school_support_email,
-                    'password' => Hash::make($request->school_support_phone),
-                    'school_id' => $schoolData->id,
+                    'last_name'  => 'Admin',
+                    'mobile'     => $request->school_support_phone,
+                    'email'      => $request->school_support_email,
+                    'password'   => Hash::make($request->school_support_phone),
+                    'school_id'  => $schoolData->id,
                 );
 
 
@@ -1410,7 +1415,7 @@ class SchoolController extends Controller
                 $user = $this->userRepository->create($admin_data);
 
                 // Update Admin id to School Data
-                $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id, 'database_name' => $database_name]);
+                $schoolData = $this->schoolsRepository->update($schoolData->id, ['admin_id' => $user->id,'database_name' => $database_name]);
 
 
                 $schoolDataArray = [];
@@ -1418,16 +1423,16 @@ class SchoolController extends Controller
                 $extraFields = $request->extra_fields;
 
 
-                if (isset($extraFields)) {
+                if(isset($extraFields)){
                     foreach ($extraFields as $field) {
                         // Validate the required fields before saving
                         if (isset($field['form_field_id']) && isset($field['data'])) {
 
                             $schoolDataArray = array(
                                 'school_inquiry_id' => null,
-                                'school_id' => $schoolData->id,
-                                'form_field_id' => $field['form_field_id'],
-                                'data' => $field['data']
+                                'school_id'         => $schoolData->id,
+                                'form_field_id'     => $field['form_field_id'],
+                                'data'              => $field['data']
                             );
 
                             $this->extraSchoolData->update($field['id'], $schoolDataArray);
@@ -1449,7 +1454,7 @@ class SchoolController extends Controller
                 if ($request->assign_package) {
                     // Create subscription plan
                     $this->subscriptionService->createSubscription($request->assign_package, $schoolData->id, null, 1);
-                    $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'), $schoolData->id);
+                    $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'),$schoolData->id);
 
                 }
 
@@ -1488,7 +1493,7 @@ class SchoolController extends Controller
 
 
                 ResponseService::successResponse('School Registered Successfully');
-            } elseif ($request->status == 2) {
+            }elseif($request->status == 2){
 
                 $email_body = $this->replaceEmailPlaceholders($request, $settings);
 
@@ -1507,7 +1512,7 @@ class SchoolController extends Controller
                 $this->schoolInquiry->update($request->edit_id, ['status' => 2]);
 
                 ResponseService::successResponse('Email Sent Successfully');
-            } else {
+            }else{
                 ResponseService::successResponse('Data Stored Successfully');
             }
 
@@ -1550,7 +1555,7 @@ class SchoolController extends Controller
     {
         ResponseService::noPermissionThenSendJson('schools-delete');
         try {
-            $school_inquiry = $this->schoolInquiry->builder()->where('id', $id)->first();
+            $school_inquiry = $this->schoolInquiry->builder()->where('id',$id)->first();
             $school_inquiry->delete();
             ResponseService::successResponse("Data Deleted Successfully.");
         } catch (Throwable $e) {

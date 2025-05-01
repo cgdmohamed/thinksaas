@@ -135,7 +135,7 @@ class UserService {
         $roll_number_db = $roll_number_db['max(roll_number)'];
         $roll_number = $roll_number_db + 1;
 
-        $student = $this->student->create([
+        $student = $this->student->updateOrCreate( ['user_id' => $user->id] ,[
             'user_id'          => $user->id,
             'class_section_id' => $classSectionID,
             'admission_no'     => $admission_no,

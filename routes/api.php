@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+/**
+ * Webhook Routes
+ **/
 Route::post('subscription/webhook/stripe', [SubscriptionWebhookController::class, 'stripe']);
 Route::post('subscription/webhook/razorpay', [SubscriptionWebhookController::class, 'razorpay']);
 
@@ -282,8 +286,8 @@ Route::group(['middleware' => ['APISwitchDatabase',]], static function () {
     Route::get('holidays', [ApiController::class, 'getHolidays']);
     Route::post('change-password', [ApiController::class, 'changePassword']);
 //    Route::get('test', [ApiController::class, 'getPaymentMethod']);
-    Route::get('payment-confirmation', [ApiController::class, 'getPaymentConfirmation']);
-    Route::get('payment-transactions', [ApiController::class, 'getPaymentTransactions']);
+    Route::get('payment-confirmation', [ApiController::class, 'getPaymentConfirmation'])->name('payment-confirmation');
+    Route::get('payment-transactions', [ApiController::class, 'getPaymentTransactions'])->name('payment-transactions');
     Route::get('gallery', [ApiController::class, 'getGallery']);
     Route::get('session-years', [ApiController::class, 'getSessionYear']);
 //    Route::get('features', [ApiController::class, 'getFeatures']);

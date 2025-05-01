@@ -49,6 +49,8 @@ use App\Services\GeneralFunctionService;
 use Laravel\Sanctum\PersonalAccessToken;
 use App\Models\School;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 class ApiController extends Controller
 {
@@ -313,30 +315,65 @@ class ApiController extends Controller
                 $paymentTransactions->where('created_at', '>', Carbon::now()->subMinutes(30)->toDateTimeString());
             }
             $paymentTransactions = $paymentTransactions->with('school')->orderBy('id', 'DESC')->get();
+
             $schoolSettings = app(SchoolSettingInterface::class)->builder()
                 ->where(function ($q) {
                     $q->where('name', 'currency_code')->orWhere('name', 'currency_symbol');
                 })->whereIn('school_id', $paymentTransactions->pluck('school_id'))->get();
 
-            $paymentTransactions = collect($paymentTransactions)->map(function ($data) use ($schoolSettings) {
+            $paymentTransactions = $paymentTransactions->map(function ($data) use ($schoolSettings) {
                 $getSchoolSettings = $schoolSettings->filter(function ($settings) use ($data) {
                     return $settings->school_id == $data->school_id;
-                })->pluck('data', 'name');
+                })->where('status', 1)->pluck('data', 'name');
                 $data->currency_code = $getSchoolSettings['currency_code'] ?? '';
                 $data->currency_symbol = $getSchoolSettings['currency_symbol'] ?? '';
                 if ($data->payment_status == "pending") {
                     try {
                         if ($data->order_id) {
-                            $paymentIntent = PaymentService::create($data->payment_gateway, $data->school_id)->retrievePaymentIntent($data->order_id);
-                            $paymentIntent = PaymentService::formatPaymentIntent($data->payment_gateway, $paymentIntent);    
+                            // For Flutterwave, use tx_ref for verification
+                            if ($data->payment_gateway == "Flutterwave") {
+                                $paymentService = PaymentService::create($data->payment_gateway, $data->school_id);
+                                // $paymentIntent = $paymentService->verifyPayment($data->order_id);
+                                
+                                // Update transaction status based on verification
+                                if (isset($paymentIntent['status'])) {
+                                    $status = match (strtolower($paymentIntent['status'])) {
+                                        'successful', 'completed' => 'succeed',
+                                        'failed', 'cancelled' => 'failed',
+                                        default => 'pending'
+                                    };
+                                    
+                                    if ($status !== 'pending') {
+                                        $this->paymentTransaction->update($data->id, [
+                                            'payment_status' => $status,
+                                            'payment_id' => $paymentIntent['transaction_id'] ?? null,
+                                            'school_id' => $data->school_id
+                                        ]);
+                                        $data->payment_status = $status;
+                                    }
+                                }
+                            } else {
+                                // For other payment gateways
+                                $paymentIntent = PaymentService::create($data->payment_gateway, $data->school_id)
+                                    ->retrievePaymentIntent($data->order_id);
+                                $paymentIntent = PaymentService::formatPaymentIntent($data->payment_gateway, $paymentIntent);
+                                
+                                if ($paymentIntent['status'] != "pending") {
+                                    $this->paymentTransaction->update($data->id, [
+                                        'payment_status' => $paymentIntent['status'],
+                                        'school_id' => $data->school_id
+                                    ]);
+                                    $data->payment_status = $paymentIntent['status'];
+                                }
+                            }
                         }
-                        
-                    } catch (ApiErrorException) {
-                        $this->paymentTransaction->update($data->id, ['payment_status' => "failed", 'school_id' => $data->school_id]);
-                    }
-
-                    if (!empty($paymentIntent) && $paymentIntent['status'] != "pending") {
-                        $this->paymentTransaction->update($data->id, ['payment_status' => $paymentIntent['status'] ?? "failed", 'school_id' => $data->school_id]);
+                    } catch (Exception $e) {
+                        Log::error('Payment verification error:', [
+                            'payment_id' => $data->id,
+                            'order_id' => $data->order_id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't update status on verification error
                     }
                 }
                 return $data;
@@ -730,7 +767,7 @@ class ApiController extends Controller
             'current_address' => 'required',
             'permanent_address' => 'required',
             'gender' => 'required|in:male,female',
-            'image'           => 'nullable|mimes:jpeg,png,jpg,svg|max:5120',
+            'image'           => 'nullable|image|mimes:jpeg,png,jpg,svg|max:5120',
         ]);
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
@@ -1178,7 +1215,9 @@ class ApiController extends Controller
                         ->orWhere('last_name', 'LIKE', "%$search%");
                     });
                 }
-                $users = $users->orderBy('first_name','ASC')->with('roles')->paginate(10);
+                $users = $users->whereHas('roles',function($q) use($request){
+                    $q->where('name',$request->role);
+                })->orderBy('first_name','ASC')->with('roles')->paginate(10);
             }
             
             ResponseService::successResponse("Data Fetched Successfully",$users);
@@ -1426,4 +1465,30 @@ class ApiController extends Controller
             return ResponseService::errorResponse();
         }
     }
+
+    
+
+    public function paymentStatus(Request $request)
+    {
+        Log::info('Payment Status Callback:', $request->all());
+        ResponseService::successResponse("Payment Status Callback.", $request->all());
+    }
+
+    public function flutterwaveFeesWebhook(Request $request)
+    {
+        Log::info('Flutterwave Fees Webhook:', $request->all());
+        ResponseService::successResponse("Flutterwave Fees Webhook received.");
+    }
+
+    public function flutterwaveSuccessCallback() {
+        Log::info('Flutterwave Successfully.');
+        ResponseService::successResponse("Flutterwave Successfully.");
+    }
+    
+    public function flutterwaveCancelCallback() {
+        Log::info('Flutterwave Payment Canceled.');
+        ResponseService::successResponse("Flutterwave Payment Canceled.");
+    }
+    
+    
 }

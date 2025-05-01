@@ -129,7 +129,8 @@ class LoginController extends Controller
                 Session::put('school_database_name', $school->database_name);
 
                 $data = DB::table('users')->where('email',$request->email)->first();
-                if ($data) {
+
+                if ($data && $school->status == 1) {
                     if (( $data->two_factor_secret == null || $data->two_factor_expires_at == null ) && $data->two_factor_enabled == 1 && !Auth::user()->hasRole('Teacher') && $request->email != 'demo@school.com' && !env('DEMO_MODE')) {
                         $twoFACode = $this->generate2FACode();
                         $settings = $this->cache->getSystemSettings();

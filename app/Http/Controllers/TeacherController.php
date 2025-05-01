@@ -82,6 +82,7 @@ class TeacherController extends Controller {
             'current_address'   => 'required',
             'permanent_address' => 'required',
             'status'            => 'nullable|in:0,1',
+            'image'             => 'nullable|image|mimes:jpeg,png,jpg,svg,gif,webp',
         ]);
         try {
             DB::beginTransaction();

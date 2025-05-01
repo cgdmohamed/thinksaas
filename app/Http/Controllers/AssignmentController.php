@@ -7,6 +7,7 @@ use App\Repositories\Assignment\AssignmentInterface;
 use App\Repositories\AssignmentCommon\AssignmentCommonInterface;
 use App\Repositories\AssignmentSubmission\AssignmentSubmissionInterface;
 use App\Repositories\ClassSection\ClassSectionInterface;
+use App\Repositories\ClassSubject\ClassSubjectInterface;
 use App\Repositories\Files\FilesInterface;
 use App\Repositories\SessionYear\SessionYearInterface;
 use App\Repositories\Student\StudentInterface;
@@ -34,8 +35,9 @@ class AssignmentController extends Controller
     private CachingService $cache;
     private SubjectTeacherInterface $subjectTeacher;
     private AssignmentCommonInterface $assignmentCommon;
+    private ClassSubjectInterface $class_subjects;
 
-    public function __construct(AssignmentInterface $assignment, ClassSectionInterface $classSection, SubjectInterface $subject, FilesInterface $files, StudentInterface $student, AssignmentSubmissionInterface $assignmentSubmission, SessionYearInterface $sessionYear, CachingService $cachingService, SubjectTeacherInterface $subjectTeacher, AssignmentCommonInterface $assignmentCommon)
+    public function __construct(AssignmentInterface $assignment, ClassSectionInterface $classSection, SubjectInterface $subject, FilesInterface $files, StudentInterface $student, AssignmentSubmissionInterface $assignmentSubmission, SessionYearInterface $sessionYear, CachingService $cachingService, SubjectTeacherInterface $subjectTeacher, AssignmentCommonInterface $assignmentCommon, ClassSubjectInterface $class_subjects)
     {
         $this->assignment = $assignment;
         $this->classSection = $classSection;
@@ -47,6 +49,7 @@ class AssignmentController extends Controller
         $this->cache = $cachingService;
         $this->subjectTeacher = $subjectTeacher;
         $this->assignmentCommon = $assignmentCommon;
+        $this->class_subjects = $class_subjects;
     }
 
     public function index()
@@ -72,7 +75,7 @@ class AssignmentController extends Controller
         $request->validate([
             "class_section_id"      => 'required|array',
             "class_section_id.*"    => 'numeric',
-            "class_subject_id"            => 'required|numeric',
+            "subject_id"            => 'required|numeric',
             "name"                        => 'required',
             "description"                 => 'nullable',
             "due_date"                    => 'required|date',
@@ -89,7 +92,6 @@ class AssignmentController extends Controller
         ]);
         try {
             DB::beginTransaction();
-            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
             $sessionYear = $this->cache->getDefaultSessionYear();
 
@@ -101,37 +103,52 @@ class AssignmentController extends Controller
                 'session_year_id'             => $sessionYear->id,
                 'created_by'                  => Auth::user()->id,
             );
-            $section_ids = is_array($request->class_section_id) ? $request->class_section_id : [$request->class_section_id];
-            $assignment= [];
-            $assignmentModelAssociate = [];
-            $assignmentCommonData = [];
 
+            $section_ids = is_array($request->class_section_id) ? $request->class_section_id : [$request->class_section_id];
+            $assignment = [];
+            $assignmentCommonData = [];
+        
             foreach ($section_ids as $section_id) {
                 $assignmentData = array_merge($assignmentData, ['class_section_id' => $section_id]);
             }
-
-            // Store the lesson data
-            // dd($assignmentData);
+        
+            // Get class_section_id to class_subject_id
+            $classSection = [];
+            if ($request->class_section_id) {
+                foreach ($request->class_section_id as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with(['class_subject' => function ($q) use ($request) {
+                        $q->where('subject_id', $request->subject_id);
+                    }])->first();
+                }
+            }
+        
+            // Store the assignment data
+            $assignmentData['class_subject_id'] = $classSection->class_subject->id;
+            unset($assignmentData['subject_id']);
+            unset($assignmentData['user_id']);
             $assignment = $this->assignment->create($assignmentData);
+           
 
-            $assignmentCommonData['assignment_id'] = $assignment->id;
-
+            // Create assignment_commons for each section
             foreach ($section_ids as $section_id) {
-                $assignmentData = array_merge($assignmentData, ['class_section_id' => $section_id]);
-                
-                $assignmentCommonData['class_section_id'] = $assignmentData['class_section_id'];
-                
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->class_subjects->builder()
+                    ->where('class_id', $classSection->class->id)
+                    ->where('subject_id', $request->subject_id)
+                    ->first();
+                $assignmentCommonData['assignment_id'] = $assignment->id;
+                $assignmentCommonData['class_section_id'] = $section_id;
+                $assignmentCommonData['class_subject_id'] = $classSubjects->id;
                 $this->assignmentCommon->create($assignmentCommonData);
             }
-
-            // If File Exists
+        
+            // Handle File Upload
             if ($request->hasFile('file')) {
-                $fileData = array(); // Empty FileData Array
-            
+                $fileData = [];
+        
                 $assignmentModelAssociate = $this->files->model()->modal()->associate($assignment);
-            
+        
                 foreach ($request->file('file') as $file_upload) {
-
                     $tempFileData = array(
                         'modal_type' => $assignmentModelAssociate->modal_type,
                         'modal_id'   => $assignmentModelAssociate->modal_id,
@@ -139,24 +156,24 @@ class AssignmentController extends Controller
                         'type'       => 1,
                         'file_url'   => $file_upload, 
                     );
-                    $fileData[] = $tempFileData; // Store temp file data in the array
+                    $fileData[] = $tempFileData;
                 }
-            
+        
                 // Store the files data
                 $this->files->createBulk($fileData);
             }
-            
+        
+            // Handle URL Upload
             if ($request->add_url) {
-                $urlData = array(); // Empty URL data array
-            
+                $urlData = [];
                 $urls = is_array($request->add_url) ? $request->add_url : [$request->add_url];
-            
+        
                 foreach ($urls as $url) {
                     $urlParts = parse_url($url);
-                    $fileName = basename($urlParts['path']); // Extract the file name from the URL
-            
+                    $fileName = basename($urlParts['path']);
+        
                     $assignmentModelAssociate = $this->files->model()->modal()->associate($assignment);
-            
+        
                     $tempUrlData = array(
                         'modal_type' => $assignmentModelAssociate->modal_type,
                         'modal_id'   => $assignmentModelAssociate->modal_id,
@@ -164,36 +181,36 @@ class AssignmentController extends Controller
                         'type'       => 4,
                         'file_url'   => $url,
                     );
-            
-                    $urlData[] = $tempUrlData; // Store temp URL data in the array
+        
+                    $urlData[] = $tempUrlData;
                 }
-            
+        
                 // Store the URL data
                 $this->files->createBulk($urlData);
             }
-            
-
+        
+            // Send Notification
             $subjectName = $this->subject->builder()->select('name')->where('id', $request->subject_id)->pluck('name')->first();
             $title = 'New assignment added in ' . $subjectName;
             $body = $request->name;
             $type = "assignment";
+        
+            // Get student and guardian IDs for notifications
             $students = $this->student->builder()->where('class_section_id', $request->class_section_id)->get();
             $guardian_id = $students->pluck('guardian_id')->toArray();
             $student_id = $students->pluck('user_id')->toArray();
             $user = array_merge($student_id, $guardian_id);
-
+        
             send_notification($user, $title, $body, $type);
-            // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        
             DB::commit();
             ResponseService::successResponse('Data Stored Successfully');
         } catch (Throwable $e) {
-            if (Str::contains($e->getMessage(), [
-                'does not exist','file_get_contents'
-            ])) {
-                DB::commit();
+            DB::rollBack();
+        
+            if (Str::contains($e->getMessage(), ['does not exist', 'file_get_contents'])) {
                 ResponseService::warningResponse("Data Stored successfully. But App push notification not send.");
             } else {
-                DB::rollback();
                 ResponseService::logErrorResponse($e, "Assignment Controller -> Store Method");
                 ResponseService::errorResponse();
             }
@@ -236,7 +253,7 @@ class AssignmentController extends Controller
             })
             ->when(request('subject_id') != null, function ($query) {
                 $subject_id = request('subject_id');
-                $query->where(function ($query) use ($subject_id) {
+                $query->whereHas('assignment_commons', function ($query) use ($subject_id) {
                     $query->where('class_subject_id', $subject_id);
                 });
             })

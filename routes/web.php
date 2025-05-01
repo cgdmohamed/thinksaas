@@ -66,6 +66,8 @@ use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WebSettingsController;
+use App\Http\Controllers\WizardSettingsController;
+use App\Http\Controllers\PaymentController;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Models\SubscriptionBill;
@@ -116,6 +118,13 @@ Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('
 Route::get('students/admission-form', [StudentController::class, 'admissionForm'])->name('admission.form');
 Route::get('email/verify', [Controller::class, 'emailVerify']);
 
+// wizard settings
+Route::get('wizard-settings/', [WizardSettingsController::class, 'index'])->name('wizard-settings.index');
+Route::post('wizard-settings/store', [WizardSettingsController::class, 'store'])->name('wizard-settings.store');
+Route::post('/update-wizard-session', [WizardSettingsController::class, 'updateWizardSystemSettings'])->name('wizard-settings.update-wizard-session');
+Route::get('wizard-settings/show', [WizardSettingsController::class, 'show'])->name('wizard-settings.show');
+
+
 Route::group(['prefix' => 'school'], static function () {
     Route::get('about-us', [Controller::class, 'about_us']);
     Route::get('contact-us', [Controller::class, 'contact_us']);
@@ -142,7 +151,7 @@ Route::group(['prefix' => 'install'], static function () {
 });
 
 // auth
-Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchDatabase','verifiedEmail','CheckForMaintenanceMode','2fa']], static function () {
+Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchDatabase','verifiedEmail','CheckForMaintenanceMode','2fa','wizardSettings']], static function () {
 
     Route::group(['middleware' => 'language'], static function () {
 
@@ -161,7 +170,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete("/{id}/deleted", [FormFieldsController::class, 'schoolTrash'])->name('school-custom-field.trash');
 
         });
-
+        
         Route::group(['prefix' => 'schools'], static function () {
             Route::put("/{id}/restore", [SchoolController::class, 'restore'])->name('schools.restore');
             Route::delete("/{id}/deleted", [SchoolController::class, 'trash'])->name('schools.trash');
@@ -177,7 +186,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('/school-inquiry-list', [SchoolController::class, 'schoolInquiryList'])->name('school-inquiry.list');
             Route::post('/school-inquiry-update', [SchoolController::class, 'schoolInquiryUpdate'])->name('school-inquiry.update');
             Route::delete("/{id}/school-inquiry-delete", [SchoolController::class, 'schoolInquiryDelete'])->name('school-inquiry.delete');
-
+            
         });
         Route::resource('schools', SchoolController::class);
 
@@ -202,8 +211,14 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::get('prepaid-package/{id}', [AddonController::class, 'prepaid_package_addon'])->name('prepaid_package_addon');
 
-            Route::get('payment/success/{checkout_session_id}/{id}', [AddonController::class, 'payment_success']);
+            // Stripe
+            Route::get('payment/success/{checkout_session_id?}/{id}', [AddonController::class, 'payment_success']);
             Route::get('payment/cancel', [AddonController::class, 'payment_cancel']);
+
+
+            // Razorpay, Paystack, Flutterwave
+            Route::get('payment/success', [AddonController::class, 'payment_success_callback'])->name('addons.payment.success');
+            Route::get('payment/cancel_callback', [AddonController::class, 'payment_cancel_callback'])->name('addons.payment.cancel');
 
         });
         Route::resource('addons', AddonController::class);
@@ -212,7 +227,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'subscriptions'], static function () {
             Route::get('plan/{id}/type/{type}/current-plan/{isCurrentPlan?}', [SubscriptionController::class, 'plan']);
             Route::get('prepaid/package/{package_id}/{type?}/{isCurrentPlan?}', [SubscriptionController::class, 'prepaid_plan']);
-
+            
             Route::get('history', [SubscriptionController::class, 'history'])->name('subscriptions.history');
             Route::get('cancel-upcoming/{id?}', [SubscriptionController::class, 'cancel_upcoming'])->name('subscriptions.cancel.upcoming');
             Route::get('confirm-upcoming-plan/{id}', [SubscriptionController::class, 'confirm_upcoming_plan']);
@@ -242,13 +257,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('transaction/{year}', [SubscriptionController::class, 'transaction']);
 
             // Razorpay
-            Route::post('create/order-id', [SubscriptionController::class, 'razorpay_order_id']);
+            Route::post('create/razorpay/order-id', [SubscriptionController::class, 'razorpay_order_id']);
             Route::post('razorpay', [SubscriptionController::class, 'razorpay']);
-
-            // Route::post('paystack', [SubscriptionController::class, 'paystack']);
-            // Route::post('flutterwave', [SubscriptionController::class, 'flutterwave']);
-            // Route::post('stripe', [SubscriptionController::class, 'stripe']);
-
 
         });
         Route::resource('subscriptions', SubscriptionController::class);
@@ -263,12 +273,19 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('section/delete/{id}', [WebSettingsController::class, 'feature_section_delete'])->name('web-settings-section.destroy');
 
             Route::PATCH('feature-section/change/rank', [WebSettingsController::class, 'feature_section_rank'])->name('feature_section_rank');
-
+            
         });
 
         /*** System Settings ***/
         Route::group(['prefix' => 'system-settings'], static function () {
             Route::get('fcm', [SystemSettingsController::class, 'fcmIndex'])->name('system-settings.fcm');
+
+            // privacy policy
+            Route::get('privacy-policy', [SystemSettingsController::class, 'privacyPolicy'])->name('system-settings.privacy-policy');
+
+            // terms & conditions
+            Route::get('terms-condition', [SystemSettingsController::class, 'termsConditions'])->name('system-settings.terms-condition');
+
             Route::get('student-privacy-policy', [SystemSettingsController::class, 'privacyPolicy'])->name('system-settings.student-privacy-policy');
             Route::get('student-terms-condition', [SystemSettingsController::class, 'termsConditions'])->name('system-settings.student-terms-condition');
             Route::get('contact-us', [SystemSettingsController::class, 'contactUs'])->name('system-settings.contact-us');
@@ -354,15 +371,15 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::delete('payroll-setting/{id}',[StaffController::class,'deletePayrollSetting']);
             Route::put('payroll-setting/{id}',[StaffController::class,'updatePayrollSetting']);
-
+            
 
         });
-
+        
         Route::resource('staff', StaffController::class);
         Route::put("staff/{id}/change-status", [StaffController::class, 'restore'])->name('staff.restore');
         Route::delete("staff/{id}/deleted", [StaffController::class, 'trash'])->name('staff.trash');
         Route::post("staff/change-status-bulk", [StaffController::class, 'changeStatusBulk']);
-
+       
 
         /*** Medium ***/
         Route::group(['prefix' => 'mediums'], static function () {
@@ -433,12 +450,12 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::group(['prefix' => 'students'], static function () {
             Route::get('create-bulk', [StudentController::class, 'createBulkData'])->name('students.create-bulk-data');
             Route::post('store-bulk', [StudentController::class, 'storeBulkData'])->name('students.store-bulk-data');
-
+            
             // Update bulk profile student & guardian
             Route::get('update-profile', [StudentController::class, 'update_profile'])->name('students.upload-profile');
             Route::get('list/{id?}', [StudentController::class, 'list'])->name('students.list');
             Route::post('update-profile', [StudentController::class, 'store_update_profile'])->name('students.update-profile');
-
+            
 
             Route::get('download-file', [StudentController::class, 'downloadSampleFile'])->name('student.bulk-data-sample');
             Route::delete('change-status/{id}', [StudentController::class, 'changeStatus'])->name('student.change-status');
@@ -581,7 +598,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('exams/view-marks', [ExamController::class, 'viewMarksindex'])->name('exam.view-marks');
         Route::get('exams/view-marks-list', [ExamController::class, 'viewMarksShow'])->name('exam.view-marks-list');
         Route::get('exams/get-exams/{class_section_id}', [ExamController::class, 'getExamByClassId'])->name('exams.classes');
-
+    
         Route::resource('exams', ExamController::class);
 
         // TODO make two groups promote student and transfer student and classify the routes related to their group
@@ -595,7 +612,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('language-sample', [LanguageController::class, 'language_sample']);
         Route::get('language-json-file/{code?}', [LanguageController::class, 'language_file'])->name('language.json.file');
 
-
+        
         Route::get('language-list', [LanguageController::class, 'show']);
         Route::resource('language', LanguageController::class);
 
@@ -647,7 +664,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::get('/fees-over-due/{class_section_id}', [FeesController::class, 'feesOverDue']);
             Route::post('/student-account-deactivate', [FeesController::class, 'studentAccountDeactivate'])->name('deactivate-student-account');
 
-
+           
         });
         Route::resource('fees', FeesController::class);
 
@@ -672,7 +689,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::resource('online-exam-question', OnlineExamQuestionController::class);
         // End Online Exam Routes
 
-
+        
 
         /*** School Settings ***/
         Route::group(['prefix' => 'school-settings'], static function () {
@@ -684,7 +701,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
 
             Route::get('email-template', [SchoolSettingsController::class, 'emailTemplate'])->name('school-settings.email.template');
             Route::put('email-template', [SchoolSettingsController::class, 'emailTemplateUpdate'])->name('school-settings.email-template.update');
-
+            
 
             Route::get('refund-cancellation', [SchoolSettingsController::class, 'refund_cancellation'])->name('school-settings.refund-cancellation');
 
@@ -704,7 +721,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         });
 
 
-
+        
 
         /*** Form Fields ***/
         Route::group(['prefix' => 'form-fields'], static function () {
@@ -729,7 +746,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         Route::get('payroll/slip/{id?}',[PayrollController::class,'slip'])->name('payroll.slip');
         Route::get('payroll/slips',[PayrollController::class,'slip_index'])->name('payroll.slip.index');
         Route::get('payroll/slips/list',[PayrollController::class,'slip_list'])->name('payroll.slip.list');
-
+        
         Route::resource('payroll', PayrollController::class)->only(['index', 'store', 'show']);
 
         // Leave
@@ -778,7 +795,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
             Route::delete('delete/{table}/{id}', [Controller::class, 'relatedDataDestroy'])->name('related-data.trash');
         });
 
-
+        
         Route::group(['prefix' => 'gallery'], static function () {
             Route::delete('file/delete/{id}', [GalleryController::class, 'deleteFile'])->name('gallery.delete');
         });
@@ -790,8 +807,8 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
         });
         Route::resource('notifications', NotificationController::class);
 
-
-
+        
+        
 
         Route::group(['prefix' => 'school'], static function () {
             Route::group(['prefix' => 'web-settings'], static function () {
@@ -799,7 +816,7 @@ Route::group(['middleware' => ['Role', 'checkSchoolStatus', 'status','SwitchData
                 Route::post('/', [WebSettingsController::class, 'school_store'])->name('school.web-settings.store');
 
             });
-
+            
         });
         Route::resource('web-settings', WebSettingsController::class);
 
@@ -840,27 +857,39 @@ Route::post('subscription/webhook/razorpay', [SubscriptionWebhookController::cla
 Route::post('subscription/webhook/paystack', [SubscriptionWebhookController::class, 'paystack']);
 Route::post('subscription/webhook/flutterwave', [SubscriptionWebhookController::class, 'flutterwave']);
 
-// School terms & conditions
-Route::get('school-settings/{id}/terms-condition', [SchoolSettingsController::class, 'public_terms_condition']);
-Route::get('school-settings/{id}/privacy-policy', [SchoolSettingsController::class, 'public_privacy_policy']);
-Route::get('school-settings/{id}/refund-cancellation', [SchoolSettingsController::class, 'public_refund_cancellation']);
-// End school terms & conditions
+// Payment Routes for app
+Route::prefix('payment')->group(function () {
+    Route::get('/status', [PaymentController::class, 'status'])->name('payment.status');
+    Route::get('/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
+});
+
+
 
 // Super admin
-Route::get('page/student-privacy-policy', static function () {
+Route::get('page/privacy-policy', static function () {
     $cache = app(CachingService::class);
-    echo htmlspecialchars_decode($cache->getSystemSettings('student_privacy_policy'));
-})->name('public.student-privacy-policy');
+    echo htmlspecialchars_decode($cache->getSystemSettings('privacy_policy'));
+})->name('public.privacy-policy.privacy-policy');
 
-Route::get('page/teacher-privacy-policy', static function () {
+Route::get('page/teacher-staff-privacy-policy', static function () {
     $cache = app(CachingService::class);
-    echo htmlspecialchars_decode($cache->getSystemSettings('teacher_privacy_policy'));
-})->name('public.teacher-privacy-policy');
+    echo htmlspecialchars_decode($cache->getSystemSettings('teacher_staff_privacy_policy'));
+})->name('public.teacher-staff-privacy-policy');
+
+Route::get('page/student-parent-privacy-policy', static function () {
+    $cache = app(CachingService::class);
+    echo htmlspecialchars_decode($cache->getSystemSettings('student_parent_privacy_policy'));
+})->name('public.student-parent-privacy-policy');
+
+Route::get('page/terms-conditions', static function () {
+    $cache = app(CachingService::class);
+    echo htmlspecialchars_decode($cache->getSystemSettings('terms_condition'));
+})->name('public.terms-conditions');
 
 Route::get('page/student-terms-conditions', static function () {
     $cache = app(CachingService::class);
     echo htmlspecialchars_decode($cache->getSystemSettings('student_terms_condition'));
-})->name('public.terms-conditions');
+})->name('public.student-terms-conditions');
 
 Route::get('page/teacher-terms-conditions', static function () {
     $cache = app(CachingService::class);
@@ -872,162 +901,15 @@ Route::get('page/refund-cancellation', static function () {
     echo htmlspecialchars_decode($cache->getSystemSettings('refund_cancellation'));
 })->name('public.refund-cancellation');
 
-Route::get('school-terms-condition', static function () {
-    $cache = app(CachingService::class);
-    echo htmlspecialchars_decode($cache->getSystemSettings('school_terms_condition'));
-});
+// School terms & conditions
+Route::get('school-settings/{id}/terms-condition', [SchoolSettingsController::class, 'public_terms_condition'])->name('school-settings.get-terms-condition');
+Route::get('school-settings/{id}/privacy-policy', [SchoolSettingsController::class, 'public_privacy_policy'])->name('school-settings.get-privacy-policy');
+Route::get('school-settings/{id}/refund-cancellation', [SchoolSettingsController::class, 'public_refund_cancellation'])->name('school-settings.get-refund-cancellation');
+// End school terms & conditions
 
+// Payment Gateway Apps Status 
+Route::get('payment/status', [PaymentController::class, 'status'])->name('payment.status');
 
-Route::get('/pay', function () {
-    $url = "https://api.paystack.co/transaction/initialize";
-
-     $fields = [
-        'email' => "customer@email.com",
-        'amount' => 5000,  // Amount should be in kobo (500000 = 5000 NGN)
-        'metadata' => json_encode([
-            'order_id' => '12345',  // Custom data: Order ID
-            'user_id' => '6789',    // Custom data: User ID
-            'other_info' => 'Some additional info',  // Any other custom data
-        ])
-    ];;
-
-    $fields_string = http_build_query($fields);
-
-    // Initialize cURL session
-    $ch = curl_init();
-
-    // Set the cURL options
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer " . env('PAYSTACK_SECRET_KEY'),
-        "Cache-Control: no-cache",
-    ]);
-
-    // Return response instead of printing it
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    // Execute cURL request
-    $response = curl_exec($ch);
-
-    // Close cURL session
-    curl_close($ch);
-
-    // Decode the JSON response
-    $response = json_decode($response);
-    // dd($response );
-    // Check if the response is successful
-    if ($response->status) {
-        // Get the reference from the response
-        $reference = $response->data->reference;
-
-        // Redirect to the Paystack payment page with reference in the URL
-        return redirect($response->data->authorization_url . '?reference=' . $reference);
-    }
-
-    // Handle failure in case of errors
-    return back()->with('error', 'Something went wrong. Please try again.');
-})->name('pay');
-
-
-Route::get('callback', function (Request $request) {
-    // Get the reference from the query parameter
-    $reference = $request->query('reference');
-
-    if (!$reference) {
-        return redirect()->route('payment.failed')->with('error', 'No reference found.');
-    }
-
-    // Initialize cURL to verify the transaction
-    $curl = curl_init();
-
-    curl_setopt_array($curl, [
-        CURLOPT_URL => "https://api.paystack.co/transaction/verify/" . $reference,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => "GET",
-        CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer " . env('PAYSTACK_SECRET_KEY'),
-            "Cache-Control: no-cache",
-        ],
-    ]);
-
-    // Execute cURL request and handle errors
-    $response = curl_exec($curl);
-    $err = curl_error($curl);
-
-    // Close cURL session
-    curl_close($curl);
-
-    // Check if the cURL request had any errors
-    if ($err) {
-        return redirect()->route('payment.failed')->with('error', 'cURL Error: ' . $err);
-    }
-
-    // Decode the JSON response
-    $response = json_decode($response, true);
-
-    // Check the response from Paystack API
-    if ($response['status'] == true && $response['data']['status'] == 'success') {
-        // Payment was successful
-        // You can perform further actions here (e.g., update order status in the database)
-        dd( $response);
-        $data= [];
-        $data['user_id'] = $response['data']['metadata']['user_id'];
-        $data['amount'] = $response['data']['amount'];
-        $data['payment_status'] = 'succeed';
-        $data['order_id'] = $response['data']['metadata']['order_id'];
-        $data['payment_id'] = $response['data']['reference'];
-        $data['payment_gateway'] = 'paystack';
-        $data['school_id'] = $response['data']['metadata']['user_id'];
-        $data['created_at'] = Carbon::now();
-        $data['updated_at'] = Carbon::now();
-
-        PaymentTransaction::create($data);
-
-        // subscription_bills
-        $subscription_bill = new SubscriptionBill();
-        $subscription_bill->subscription_id = $response['data']['metadata']['user_id'];
-        $subscription_bill->school_id = $response['data']['metadata']['school_id'];
-        $subscription_bill->payment_transaction_id  = $response['data']['reference'];
-        $subscription_bill->amount = $response['data']['amount'];
-        $subscription_bill->total_students = $response['data']['metadata']['total_students'];
-        $subscription_bill->total_staff = $response['data']['metadata']['total_staff'];
-        $subscription_bill->due_date = $response['data']['metadata']['due_date'];
-        $subscription_bill->save();
-        return redirect()->route('payment.success')->with('success', 'Payment was successful!');
-    } else {
-        // Payment failed
-        return redirect()->route('payment.failed')->with('error', 'Payment failed or was not completed.');
-    }
-})->name('callback');
-
-Route::get('suceess',function () {
-
-})->name('suceess');
-
-Route::get('cancel',function () {
-
-})->name('cancel');
-
-
-// School admin
-
-// Route::get('school/privacy-policy', static function () {
-//     $cache = app(CachingService::class);
-//     echo htmlspecialchars_decode($cache->getSystemSettings('privacy_policy'));
-// })->name('public.privacy-policy');
-
-// Route::get('school/terms-conditions', static function () {
-//     $cache = app(CachingService::class);
-//     echo htmlspecialchars_decode($cache->getSystemSettings('terms_condition'));
-// })->name('public.terms-conditions');
-
-// Route::get('school/refund-cancellation', static function () {
-//     $cache = app(CachingService::class);
-//     echo htmlspecialchars_decode($cache->getSchoolSettings('refund_cancellation'));
-// })->name('public.refund_cancellation');
 
 
 Route::get('clear', static function () {
@@ -1099,56 +981,6 @@ Route::get('AddSuperAdminSeeder-seeder', static function () {
     echo "Done";
     return false;
 });
-
-//Route::get('test', static function () {
-//    // Replace 'A' with the table you are interested in
-//    $table = 'mediums';
-//    $id = 1;
-//    $databaseName = config('database.connections.mysql.database');
-//
-//    $relatedTables = DB::select("SELECT TABLE_NAME,COLUMN_NAME
-//            FROM information_schema.KEY_COLUMN_USAGE
-//            WHERE REFERENCED_TABLE_NAME = ? AND TABLE_SCHEMA = ?", [$table, $databaseName]);
-//    $data = [];
-//
-//    //    dd($relatedTables);
-//
-//    foreach ($relatedTables as $relatedTable) {
-//
-//        $getTableSchema = DB::select("SELECT CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
-//            FROM information_schema.KEY_COLUMN_USAGE
-//            WHERE TABLE_NAME = ? AND TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL", [$relatedTable->TABLE_NAME, $databaseName]);
-//
-//        //        dd($getTableSchema);
-//        DB::enableQueryLog();
-//        $q = DB::table($relatedTable->TABLE_NAME)->where($relatedTable->TABLE_NAME . "." . $relatedTable->COLUMN_NAME, $id);
-//
-//        //Build Join query for all the foreign key using the Table Schema
-//        foreach ($getTableSchema as $foreignKey) {
-//            if ($foreignKey->REFERENCED_TABLE_NAME != 'schools') {
-//                $q->join($foreignKey->REFERENCED_TABLE_NAME, $foreignKey->REFERENCED_TABLE_NAME . "." . $foreignKey->REFERENCED_COLUMN_NAME, '=', $relatedTable->TABLE_NAME . "." . $foreignKey->COLUMN_NAME);
-//            }
-//        }
-//
-//        //        $q = $this->buildQueryForSpecificTable($q, $relatedTable->TABLE_NAME);
-//
-//        $data[$relatedTable->TABLE_NAME] = $q->select('*')->get()->toArray();
-//        print_r($data[$relatedTable->TABLE_NAME]);
-//        //        dd(DB::getQueryLog());
-//        //            $data[$relatedTable->TABLE_NAME] = DB::table($relatedTable->TABLE_NAME)->where($relatedTable->COLUMN_NAME, $id)->get()->toArray();
-//    }
-//
-//    //    dd($data);
-//    //
-//    //    $data = [];
-//    //
-//    //    dd($referencingTables);
-//    //    foreach ($referencingTables as $table) {
-//    //        $data[$table->REFERENCED_TABLE_NAME] = DB::table($table->TABLE_NAME)->where($table->REFERENCED_COLUMN_NAME, $id)->get()->toArray();
-//    //    }
-//
-//    // Now $referencingTables contains an array of tables that reference '$respometadata'
-//});
 
 Route::get('/js/lang', static function () {
     //    https://medium.com/@serhii.matrunchyk/using-laravel-localization-with-javascript-and-vuejs-23064d0c210e

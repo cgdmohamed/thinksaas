@@ -595,7 +595,7 @@ class FeesController extends Controller
         $order = request('order', 'DESC');
 
         //Fetching Students Data on Basis of Class Section ID with Relation fees paid
-        $sql = $this->paymentTransaction->builder()->doesntHave('subscription_bill')->doesntHave('addon_subscription')->with('user:id,first_name,last_name');
+        $sql = $this->paymentTransaction->builder()->with('user:id,first_name,last_name');
 
         if (!empty($request->search)) {
             $search = $request->search;
@@ -640,7 +640,7 @@ class FeesController extends Controller
         ResponseService::noPermissionThenRedirect('fees-paid');
 
         // Fees Data With Few Selected Data
-        $fees = $this->fees->builder()->select(['id', 'name'])->get();
+        $fees = $this->fees->builder()->select(['id', 'name','class_id'])->get();
         $classes = $this->classes->all(['*'], ['medium', 'sections']);
         //        $session_year_all = $this->sessionYear->builder()->where('default', 1)->get();
         $session_year_all = $this->sessionYear->all(['id', 'name', 'default']);
@@ -659,7 +659,8 @@ class FeesController extends Controller
         $order = request('order', 'DESC');
         $feesId = (int)request('fees_id');
         $requestSessionYearId = (int)request('session_year_id');
-        $class_section_id = (int)request('class_section_id');
+        $class_section_id = request('class_section_id');
+        $class_id = request('class_id');
         $settings = $this->cache->getSchoolSettings();
 
         $sessionYearId = $requestSessionYearId ?? $this->cache->getDefaultSessionYear()->id;
@@ -694,9 +695,9 @@ class FeesController extends Controller
                 }], 'due_charges')
                 ->whereHas('student.class_section', function ($q) use ($fees) {
                     $q->where('class_id', $fees->class_id);
-                })->whereHas('student', function ($q) use ($class_section_id) {
-                    if($class_section_id != 0) {
-                        $q->where('class_section_id', $class_section_id);
+                })->whereHas('student.class_section', function ($q) use ($class_section_id, $class_id) {
+                    if($class_id) {
+                        $q->where('class_id', $class_id);
                     } 
                 });
             if (!empty($_GET['search'])) {
@@ -844,8 +845,7 @@ class FeesController extends Controller
                 } else {
                     $tempRow['paid_amount'] = 0;
                 }
-
-                if ($row->fees_paid && $row->fees_paid->compulsory_fee[0]->mode) {
+                if ($row->fees_paid && isset($row->fees_paid->compulsory_fee[0]->mode)) {
                     $tempRow['payment_method'] = $row->fees_paid->compulsory_fee[0]->mode;
                 }
 

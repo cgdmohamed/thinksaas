@@ -206,63 +206,6 @@
 
         }, 100);
 
-
-        // setTimeout(() => {
-        //     document.getElementById('razorpay-button').onclick = function(e) {
-        //         let baseUrl = window.location.origin;
-        //         var order_id = '';
-        //         var paymentTransactionId = '';
-
-        //         $.ajax({
-        //             type: "post",
-        //             url: baseUrl + '/subscriptions/create/order-id',
-        //             data: {
-        //                 amount : $('.bill_amount').val(),
-        //                 currency : "{{ $system_settings['currency_code'] ?? 'INR' }}",
-
-        //                 type : $('.type').val(),
-        //                 package_type : $('.package_type').val(),
-        //                 package_id : $('.package_id').val(),
-        //                 upcoming_plan_type : $('.upcoming_plan_type').val(),
-        //                 subscription_id : $('.subscription_id').val(),
-        //                 feature_id : $('.feature_id').val(),
-        //                 end_date : $('.end_date').val(),
-
-        //             },
-        //             success: function (response) {
-        //                 if (response.data) {
-        //                     order_id = response.data.order.id;
-        //                     paymentTransactionId = response.data.paymentTransaction.id;
-        //                     var options = {
-        //                         "key": "{{ $paymentConfiguration->api_key ?? '' }}", // Enter the Key ID generated from the Dashboard
-        //                         "amount": $('.bill_amount').val() * 100, // Amount is in currency subunits. Default currency is INR. Hence, 100 refers to 1 INR
-        //                         "currency": "{{ $system_settings['currency_code'] ?? 'INR' }}",
-        //                         "name": "{{ $system_settings['system_name'] ?? 'eSchool-Saas' }}",
-        //                         "description": "Razorpay",
-        //                         "order_id": order_id,
-        //                         "handler": function(response) {
-        //                             // Set the response data in the form
-        //                             $('.razorpay_payment_id').val(response.razorpay_payment_id);
-        //                             $('.razorpay_signature').val(response.razorpay_signature);
-        //                             $('.razorpay_order_id').val(response.razorpay_order_id);
-        //                             $('.paymentTransactionId').val(paymentTransactionId);
-
-        //                             // Submit the form
-        //                             document.querySelector('.razorpay-form').submit();
-        //                         }
-        //                     };
-
-        //                     var rzp1 = new Razorpay(options);
-        //                     rzp1.open();
-        //                 } else {
-        //                     Swal.fire({icon: 'error', text: response.message});
-        //                 }
-        //             }
-        //         });
-        //         e.preventDefault();
-        //     }
-        // }, 100);
-
     });
 
 </script>

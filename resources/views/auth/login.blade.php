@@ -53,11 +53,6 @@
             <div class="content-wrapper login-d-flex align-items-center auth">
                 <div class="flex-grow row">
                     <div class="p-4 m-4 mx-auto col-xl-6 auth-form-light">
-                        @if (env('DEMO_MODE'))
-                        <div class="text-center alert alert-info" role="alert">
-                            NOTE : <a target="_blank" href="https://eschool-saas.wrteam.me/login">-- Click Here --</a> if you cannot login.
-                        </div>
-                        @endif
                         <div class="p-5 text-left rounded-lg">
                             <div class="text-center brand-logo">
                                 @if ($schoolSettings['horizontal_logo'] ?? '')
@@ -137,7 +132,7 @@
 
                                 @if (Route::has('password.request'))
                                     <div class="my-2 d-flex justify-content-end align-items-center">
-                                        <a class="auth-link text-dark" href="{{ route('password.request') }}">
+                                        <a class="auth-link text-blue" href="{{ route('password.request') }}">
                                             {{ __('forgot_password') }}
                                         </a>
                                     </div>
@@ -146,8 +141,8 @@
                                     <input type="submit" name="btnlogin" id="login_btn" value="{{ __('login') }}"
                                         class="rounded-lg btn btn-block btn-theme btn-lg font-weight-medium auth-form-btn" />
                                 </div>
-                                <div class="my-2 d-flex align-items-center">
-                                    <a class="text-dark new-user" href="#" data-bs-toggle="modal" data-bs-dismiss="offcanvas" data-bs-target="#staticBackdrop">
+                                <div class="my-2 d-flex justify-content-end align-items-center">
+                                    <a class="text-blue" href="#" data-bs-toggle="modal" data-bs-dismiss="offcanvas" data-bs-target="#staticBackdrop">
                                         {{ __('New user Sign up to manage your school activities seamlessly') }}
                                     </a>
                                 </div>

@@ -79,13 +79,14 @@ class Controller extends BaseController {
         if (Auth::user() && (Auth::user()->two_factor_enabled == 1 && Auth::user()->two_factor_expires_at)) {
             return redirect('/dashboard');
         }
-    
+
     	if (Auth::user()) {
             return redirect('/dashboard');
         }
 
         // School website
         $fullDomain = $_SERVER['HTTP_HOST'];
+        $fullDomain = str_replace("www.", "", $fullDomain);
         $parts = explode('.', $fullDomain);
         $subdomain = $parts[0];
         $school = '';
@@ -99,7 +100,7 @@ class Controller extends BaseController {
             {
                 $baseUrl = url('/');
                 $baseUrlParts = parse_url($baseUrl);
-                $host = $baseUrlParts['host']; 
+                $host = $baseUrlParts['host'];
                 $host = str_replace("www.", "", $host);
                 $hostParts = explode('.', $host);
                 $isDemoSchool = 1;
@@ -123,19 +124,26 @@ class Controller extends BaseController {
                 }
             }
         } catch (\Throwable $th) {
-            
+
         }
 
         try {
             $school = School::on('mysql')->where('domain', $fullDomain)->orwhere('domain', $subdomain)->first();
         } catch (\Throwable $th) {
-            
+
         }
-        
-        $APP_URL = !(\Request::ip() == '127.0.0.1') 
-        ? explode('.', parse_url(env('APP_URL'))['host'])[0] 
-        : null;
-    
+
+        // www.school.com or school.com
+        // $APP_URL = !(\Request::ip() == '127.0.0.1') ? explode('.', parse_url(env('APP_URL'))['host'])[0] : null;
+        $host = \Request::getHost();
+
+        // Check if the request is NOT from localhost
+        $APP_URL = !(\Request::ip() == '127.0.0.1')
+           ? (Str::contains($host, 'www')
+               ? explode('.', parse_url(env('APP_URL'))['host'])[0] // If 'www.' exists, skip it
+               : explode('.', parse_url(env('APP_URL'))['host'])[0]) // Else, get the first part of the domain
+           : null; // If localhost, set to null
+
 
         if ($school) {
             // Get current subscription features
@@ -146,10 +154,10 @@ class Controller extends BaseController {
                 $features = array_merge($features, $addons);
                 // Check website management feature
                 if (in_array('Website Management', $features)) {
-                    return $this->school_website($school);    
-                }    
+                    return $this->school_website($school);
+                }
             }
-            
+
         }
         if (($subdomain == $APP_URL) || (\Request::ip() == '127.0.0.1' && ( $APP_URL == 'localhost' || 'http://127.0.0.1/' ) ) ) {
 
@@ -263,13 +271,13 @@ class Controller extends BaseController {
                 $validator = Validator::make($request->all(), [
                     'g-recaptcha-response' => 'required',
                 ]);
-    
+
                 if ($validator->fails()) {
                     ResponseService::errorResponse($validator->errors()->first());
                 }
-    
+
                 $googleCaptcha = app(GeneralFunctionService::class)->reCaptcha($request);
-    
+
                 if (!$googleCaptcha) {
                     ResponseService::errorResponse(trans('reCAPTCHA verification failed. Please try again.'));
                 }
@@ -386,7 +394,7 @@ class Controller extends BaseController {
         $fullDomain = $_SERVER['HTTP_HOST'];
         $parts = explode('.', $fullDomain);
         $subdomain = $parts[0];
-     
+
         $school = School::on('mysql')->where('domain', $fullDomain)->orwhere('domain', $subdomain)->first();
 
         // Verify google captcha
@@ -490,7 +498,7 @@ class Controller extends BaseController {
     public function systemLinks($type = null)
     {
         if ($type) {
-            
+
             $faqs = Faq::where('school_id', null)->get();
             $guidances = $this->guidance->builder()->get();
             $languages = Language::get();
@@ -502,7 +510,7 @@ class Controller extends BaseController {
 
         return redirect()->back();
     }
-   
+
     public function admission()
     {
          // School website
@@ -510,27 +518,27 @@ class Controller extends BaseController {
         $parts = explode('.', $fullDomain);
         $subdomain = $parts[0];
         $schoolId = '';
- 
+
         $school = School::on('mysql')->where('domain', $fullDomain)->orwhere('domain', $subdomain)->first();
-        
+
         Config::set('database.connections.school.database', $school->database_name);
         DB::purge('school');
         DB::connection('school')->reconnect();
         DB::setDefaultConnection('school');
 
         // $schoolId = $school->id;
-        $classes = ClassSchool::with('medium','stream')->where('school_id', $school->id)->get();   
+        $classes = ClassSchool::with('medium','stream')->where('school_id', $school->id)->get();
         if($school) {
-            $extraFields = $this->formFields->defaultModel()->where('user_type', 1)->orderBy('rank')->get();    
+            $extraFields = $this->formFields->defaultModel()->where('user_type', 1)->orderBy('rank')->get();
         } else {
             $extraFields = $this->formFields->defaultModel()->orderBy('rank')->get();
-        }  
+        }
         return view('school-website.admission', compact('classes', 'extraFields'));
     }
-    
+
     public function registerStudent(Request $request)
     {
-   
+
         $request->validate([
             'first_name'          => 'required',
             'last_name'           => 'required',
@@ -554,7 +562,7 @@ class Controller extends BaseController {
             $fullDomain = $_SERVER['HTTP_HOST'];
             $parts = explode('.', $fullDomain);
             $subdomain = $parts[0];
-     
+
             $school = School::on('mysql')->where('domain', $fullDomain)->orwhere('domain', $subdomain)->first();
 
             Config::set('database.connections.school.database', $school->database_name);
@@ -574,18 +582,18 @@ class Controller extends BaseController {
                 $validator = Validator::make($request->all(), [
                     'g-recaptcha-response' => 'required',
                 ]);
-    
+
                 if ($validator->fails()) {
                     ResponseService::errorResponse($validator->errors()->first());
                 }
-    
+
                 $googleCaptcha = app(GeneralFunctionService::class)->schoolreCaptcha($request, $schoolSettings);
-    
+
                 if (!$googleCaptcha) {
                     ResponseService::errorResponse('reCAPTCHA verification failed. Please try again.');
                 }
             }
-           
+
             // Get the user details from the guardian details & identify whether that user is guardian or not. if not the guardian and has some other role then show appropriate message in response
             $guardianUser = User::whereHas('roles', function ($q) {
                 $q->where('name', '!=', 'Guardian');
@@ -603,7 +611,7 @@ class Controller extends BaseController {
                 'gender'     => $request->guardian_gender,
                 'school_id'  => $school->id
             );
-    
+
             //NOTE : This line will return the old values if the user is already exists
             $parentUser = User::where('email', $request->guardian_email)->first();
             if (!empty($request->guardian_image)) {
@@ -615,7 +623,7 @@ class Controller extends BaseController {
                         Storage::disk('public')->delete($parentUser->getRawOriginal('image'));
                     }
                 }
-                
+
                 $parentUser->update($parent);
             } else {
                 $parent['password'] = Hash::make($password);
@@ -625,7 +633,7 @@ class Controller extends BaseController {
             }
             $image = null;
             if ($request->hasFile('image')) {
-                $image = UploadService::upload($request->image, 'user');    
+                $image = UploadService::upload($request->image, 'user');
             }
             $password = $this->makeStudentPassword($request->dob);
             //Create Student User First
@@ -675,7 +683,7 @@ class Controller extends BaseController {
             if (!empty($extraDetails)) {
                 $this->extraFormFields->createBulk($extraDetails);
             }
-        
+
             DB::commit();
             ResponseService::successResponse('Student Registered successfully');
         } catch (Throwable $e) {
@@ -687,15 +695,9 @@ class Controller extends BaseController {
 
     public function school_db_test()
     {
-        // return 1;
-        // return $request;
-        // Config::set('database.connections.school.database', 'eschool_saas_2_school');
-        // DB::purge('school');
-        // DB::connection('school')->reconnect();
-        // DB::setDefaultConnection('school');
         return Auth::user();
      }
-  
+
     public function emailVerify()
     {
         try {
@@ -718,13 +720,13 @@ class Controller extends BaseController {
 
             if ($user->email_verified_at) {
                 DB::connection('mysql')->table('users')->where('id',$user->id)->update(['email_verified_at' => $user->email_verified_at]);
-            }        
+            }
             return redirect()->route('home');
         } catch (\Throwable $th) {
             Auth::logout();
             return redirect()->route('login')->with('error',trans('An error occurred Please try again later'));
         }
-        
+
     }
 
     public function cacheFlush()

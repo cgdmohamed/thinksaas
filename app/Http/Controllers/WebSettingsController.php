@@ -60,8 +60,8 @@ class WebSettingsController extends Controller
         ResponseService::noPermissionThenRedirect('web-settings');
 
         $request->validate([
-            'hero_title_1'         => 'required',
-            'hero_title_2'         => 'required',
+            'hero_title_1'         => 'nullable',
+            'hero_title_2'         => 'nullable',
             'about_us_title'         => 'required',
             'about_us_heading'         => 'required',
             'about_us_description'         => 'required',

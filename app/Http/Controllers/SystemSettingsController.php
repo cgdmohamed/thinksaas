@@ -146,9 +146,11 @@ class SystemSettingsController extends Controller {
 
     public function privacyPolicy() {
         ResponseService::noPermissionThenRedirect('privacy-policy');
-        $name = 'student_privacy_policy';
-        $data = htmlspecialchars_decode($this->cache->getSystemSettings($name));
-        return view('settings.privacy-policy', compact('name', 'data'));
+        $privacy_policy_data = htmlspecialchars_decode($this->cache->getSystemSettings('privacy_policy'));
+        $student_parent_privacy_policy_data = htmlspecialchars_decode($this->cache->getSystemSettings('student_parent_privacy_policy'));
+        $teacher_staff_privacy_policy_data = htmlspecialchars_decode($this->cache->getSystemSettings('teacher_staff_privacy_policy'));
+
+        return view('settings.privacy-policy.privacy-policy', compact('privacy_policy_data', 'student_parent_privacy_policy_data', 'teacher_staff_privacy_policy_data'));
     }
 
     public function contactUs() {
@@ -167,9 +169,11 @@ class SystemSettingsController extends Controller {
 
     public function termsConditions() {
         ResponseService::noPermissionThenRedirect('terms-condition');
-        $name = 'student_terms_condition';
-        $data = htmlspecialchars_decode($this->cache->getSystemSettings($name));
-        return view('settings.terms-condition', compact('name', 'data'));
+        $terms_condition_data = htmlspecialchars_decode($this->cache->getSystemSettings('terms_condition'));
+        $student_terms_condition_data = htmlspecialchars_decode($this->cache->getSystemSettings('student_terms_condition'));
+        $teacher_terms_condition_data = htmlspecialchars_decode($this->cache->getSystemSettings('teacher_terms_condition'));
+        
+        return view('settings.terms-condition.terms-condition', compact('terms_condition_data', 'student_terms_condition_data', 'teacher_terms_condition_data'));
     }
 
     public function appSettingsIndex() {
@@ -375,15 +379,15 @@ class SystemSettingsController extends Controller {
             'gateway.Razorpay.secret_key' => 'required_if:gateway.Razorpay.status,1',
             'gateway.Razorpay.webhook_secret_key' => 'required_if:gateway.Razorpay.status,1',
 
-            // 'gateway.Paystack.status' => 'required|boolean',
-            // 'gateway.Paystack.api_key' => 'required_if:gateway.Paystack.status,1',
-            // 'gateway.Paystack.secret_key' => 'required_if:gateway.Paystack.status,1',
-            // 'gateway.Paystack.paystack_payment_url' => 'required_if:gateway.Paystack.status,1',
+            'gateway.Paystack.status' => 'required|boolean',
+            'gateway.Paystack.api_key' => 'required_if:gateway.Paystack.status,1',
+            'gateway.Paystack.secret_key' => 'required_if:gateway.Paystack.status,1',
+            'gateway.Paystack.webhook_secret_key' => 'required_if:gateway.Paystack.status,1',
 
-            // 'gateway.Flutterwave.status' => 'required|boolean',
-            // 'gateway.Flutterwave.api_key' => 'required_if:gateway.Flutterwave.status,1',
-            // 'gateway.Flutterwave.secret_key' => 'required_if:gateway.Flutterwave.status,1',
-            // 'gateway.Flutterwave.webhook_secret_key' => 'required_if:gateway.Flutterwave.status,1',
+            'gateway.Flutterwave.status' => 'required|boolean',
+            'gateway.Flutterwave.api_key' => 'required_if:gateway.Flutterwave.status,1',
+            'gateway.Flutterwave.secret_key' => 'required_if:gateway.Flutterwave.status,1',
+            'gateway.Flutterwave.webhook_secret_key' => 'required_if:gateway.Flutterwave.status,1',
         ], [
             'gateway.Stripe.api_key.required_if' => trans('The Stripe Publishable Key is required when Stripe is enabled'),
             'gateway.Stripe.secret_key.required_if' => trans('The Stripe Secret Key is required when Stripe is enabled'),
@@ -393,13 +397,14 @@ class SystemSettingsController extends Controller {
             'gateway.Razorpay.secret_key.required_if' => trans('The Razorpay Secret Key is required when Razorpay is enabled'),
             'gateway.Razorpay.webhook_secret_key.required_if' => trans('The Razorpay Webhook Secret is required when Razorpay is enabled'),
 
-            // 'gateway.Paystack.api_key.required_if' => trans('The Paystack API Key is required when Paystack is enabled'),
-            // 'gateway.Paystack.secret_key.required_if' => trans('The Paystack Secret Key is required when Paystack is enabled'),
-            // 'gateway.Paystack.paystack_payment_url.required_if' => trans('The Paystack Payment URL is required when Paystack is enabled'),
+            'gateway.Paystack.api_key.required_if' => trans('The Paystack API Key is required when Paystack is enabled'),
+            'gateway.Paystack.secret_key.required_if' => trans('The Paystack Secret Key is required when Paystack is enabled'),
+            'gateway.Paystack.webhook_secret_key.required_if' => trans('The Paystack Webhook Secret is required when Paystack is enabled'),
+            'gateway.Paystack.currency_code.required_if' => trans('The Paystack Currency Code is required when Paystack is enabled'),
 
-            // 'gateway.Flutterwave.api_key.required_if' => trans('The Flutterwave API Key is required when Flutterwave is enabled'),
-            // 'gateway.Flutterwave.secret_key.required_if' => trans('The Flutterwave Secret Key is required when Flutterwave is enabled'),
-            // 'gateway.Flutterwave.webhook_secret_key.required_if' => trans('The Flutterwave Webhook Secret is required when Flutterwave is enabled'),
+            'gateway.Flutterwave.api_key.required_if' => trans('The Flutterwave API Key is required when Flutterwave is enabled'),
+            'gateway.Flutterwave.secret_key.required_if' => trans('The Flutterwave Secret Key is required when Flutterwave is enabled'),
+            'gateway.Flutterwave.webhook_secret_key.required_if' => trans('The Flutterwave Webhook Secret is required when Flutterwave is enabled'),
         ]);
         // $request->validate([
         //     'gateway'        => 'required|array',
@@ -448,16 +453,18 @@ class SystemSettingsController extends Controller {
                         'RAZORPAY_WEBHOOK_SECRET' => trim($request->gateway['Razorpay']['webhook_secret_key']),
                         'RAZORPAY_WEBHOOK_URL' => trim($request->gateway['Razorpay']['webhook_url'] ?? ""),
                     ]);
-                } else if($request->gateway['Paystack']['status'] == 1) { 
+                } 
+                else if($request->gateway['Paystack']['status'] == 1) { 
                     $env_update = changeEnv([
                         'PAYSTACK_PUBLIC_KEY' => trim($request->gateway['Paystack']['api_key']),
                         'PAYSTACK_SECRET_KEY' => trim($request->gateway['Paystack']['secret_key']),
-                        'PAYSTACK_WEBHOOK_URL' => trim($request->gateway['Paystack']['webhook_url']),
-                        'PAYSTACK_PAYMENT_URL' => trim($request->gateway['Paystack']['paystack_payment_url']),
+                        'PAYSTACK_WEBHOOK_SECRET' => trim($request->gateway['Paystack']['webhook_secret_key']),
+                        'PAYSTACK_WEBHOOK_URL' => trim($request->gateway['Paystack']['webhook_url'] ?? ""),
                     ]);
-                } else if($request->gateway['Flutterwave']['status'] == 1) { 
+                } 
+                else if($request->gateway['Flutterwave']['status'] == 1) { 
                     $env_update = changeEnv([
-                        'FLUTTERWAVE_API_KEY' => trim($request->gateway['Flutterwave']['api_key']),
+                        'FLUTTERWAVE_PUBLISHABLE_KEY' => trim($request->gateway['Flutterwave']['api_key']),
                         'FLUTTERWAVE_SECRET_KEY' => trim($request->gateway['Flutterwave']['secret_key']),
                         'FLUTTERWAVE_WEBHOOK_SECRET' => trim($request->gateway['Flutterwave']['webhook_secret_key']),
                         'FLUTTERWAVE_WEBHOOK_URL' => trim($request->gateway['Flutterwave']['webhook_url']),

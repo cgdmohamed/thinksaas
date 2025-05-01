@@ -42,6 +42,8 @@ use Razorpay\Api\Api;
 use Stripe\Stripe;
 use Stripe\StripeClient;
 use Throwable;
+use App\Services\PaymentService;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionController extends Controller
 {
@@ -110,7 +112,7 @@ class SubscriptionController extends Controller
         $system_settings = $settings;
 
         DB::setDefaultConnection('mysql');
-        $paymentConfiguration = PaymentConfiguration::on('mysql')->where('school_id', null)->where('payment_method','Razorpay')->where('status',1)->first();
+        $paymentConfiguration = PaymentConfiguration::on('mysql')->where('school_id', null)->where('status',1)->first();
 
         DB::setDefaultConnection('school');
         return view('subscription.index', compact('packages', 'features', 'current_plan', 'settings','upcoming_package','paymentConfiguration','system_settings'));
@@ -127,11 +129,12 @@ class SubscriptionController extends Controller
             ));
         }
         try {
-            
-            if ($request->payment_method == 'paystack') {
-                return $this->subscriptionService->paystack_payment($request->id);
-            } else if ($request->payment_method == 'stripe') {
-                return $this->subscriptionService->stripe_payment($request->id);
+            if ($request->payment_method == 'stripe') {
+                return $this->subscriptionService->stripe_payment(null, $request->package_id, $request->type, null, null);
+            } else if ($request->payment_method == 'paystack') {
+                return $this->subscriptionService->paystack_payment(null, $request->package_id, $request->type, null, null);
+            } else if ($request->payment_method == 'flutterwave') {
+                return $this->subscriptionService->flutterwave_payment(null, $request->package_id, $request->type, null, null);
             }
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', trans('server_not_responding'));
@@ -231,10 +234,10 @@ class SubscriptionController extends Controller
             }
             if ($paymentConfiguration->payment_method == 'Stripe') {
                 return $this->subscriptionService->stripe_payment(null, $package_id, $type, null, $isCurrentPlan);    
-            } else {
-
+            } else if ($paymentConfiguration->payment_method == 'Paystack') {
                 return $this->subscriptionService->paystack_payment(null, $package_id, $type, null, $isCurrentPlan);
-                
+            } else if ($paymentConfiguration->payment_method == 'Flutterwave') {
+                return $this->subscriptionService->flutterwave_payment(null, $package_id, $type, null, $isCurrentPlan);
             }
             
             
@@ -374,7 +377,7 @@ class SubscriptionController extends Controller
                     $students = $this->user->builder()->withTrashed()->where(function ($q) use ($active_package) {
                         $q->whereBetween('deleted_at', [$active_package->start_date, $active_package->end_date]);
                     })->orWhereNull('deleted_at')->Owner()->role('Student')->count();
-    
+
                     $staffs = $this->staff->builder()->whereHas('user', function ($q) use ($active_package) {
                         $q->where(function ($q) use ($active_package) {
                             $q->withTrashed()->whereBetween('deleted_at', [$active_package->start_date, $active_package->end_date])
@@ -399,7 +402,7 @@ class SubscriptionController extends Controller
             $system_settings['currency_symbol'] = $system_settings['currency_symbol'] ?? '';
             $features = FeaturesService::getFeatures();
 
-
+            DB::setDefaultConnection('school');
 
             return view('subscription.subscription', compact('active_package', 'upcoming_package', 'data', 'school_settings', 'system_settings', 'features', 'paymentConfiguration'));
         } catch (Throwable $e) {
@@ -1338,8 +1341,16 @@ class SubscriptionController extends Controller
             //     ];
             // }
             // $this->subscriptionFeature->upsert($subscription_features, ['subscription_id', 'feature_id'], ['subscription_id', 'feature_id']);
-            
-            return $this->subscriptionService->stripe_payment(null, $package_id, $type, $subscription_id);
+            $paymentConfiguration = PaymentConfiguration::where('school_id', null)->where('status', 1)->first();
+
+            if ($paymentConfiguration->payment_method == 'Stripe') {
+                return $this->subscriptionService->stripe_payment(null, $package_id, $type, $subscription_id);
+            } else if ($paymentConfiguration->payment_method == 'Paystack') {
+                return $this->subscriptionService->paystack_payment(null, $package_id, $type, $subscription_id);
+            } else if ($paymentConfiguration->payment_method == 'Flutterwave') {
+                return $this->subscriptionService->flutterwave_payment(null, $package_id, $type, $subscription_id);
+            }
+
             // DB::commit();
             // return $subscription = $this->prepaid_plan($package_id, $type, $subscription_id);
             
@@ -1404,7 +1415,8 @@ class SubscriptionController extends Controller
         }
         $schoolId = Auth::user()->school_id;
         DB::setDefaultConnection('mysql');
-        $paymentConfiguration = PaymentConfiguration::whereNull('school_id')->where(['payment_method' => 'razorpay'])->first();
+        $paymentConfiguration = PaymentConfiguration::whereNull('school_id')->where(['payment_method' => 'Razorpay'])->where('status',1)->first();
+        \Log::info('==========> '.$paymentConfiguration);
         $api = new Api($paymentConfiguration->api_key, $paymentConfiguration->secret_key);
 
         $paymentTransactionData = $this->paymentTransaction->create([
@@ -1434,7 +1446,7 @@ class SubscriptionController extends Controller
             
         ];
         
-        $amount = intval(($request->amount * 100));
+        $amount = max(100, round($request->amount * 100)); // Ensure minimum ₹1.00 (100 paise)
         $order = $api->order->create([
             'receipt' => time() . mt_rand(0, 999999),
             'amount' => $amount,
@@ -1442,6 +1454,7 @@ class SubscriptionController extends Controller
             'notes' => $customMetaData,
             'payment_capture' => 1
         ]);
+        
         $data = [
             'order' => $order->toArray(),
             'paymentTransaction' => $paymentTransactionData
@@ -1454,8 +1467,6 @@ class SubscriptionController extends Controller
         ];
 
         return response()->json($response);
-
-
     }
 
     public function razorpay(Request $request)
@@ -1467,9 +1478,8 @@ class SubscriptionController extends Controller
             $currency_code = $systemSettings['currency_code'] ?? 'INR';
             // $api = app(Api::class);
             DB::setDefaultConnection('mysql');
-            $paymentConfiguration = PaymentConfiguration::whereNull('school_id')->where('payment_method', 'razorpay')->first();
+            $paymentConfiguration = PaymentConfiguration::whereNull('school_id')->where('payment_method', 'Razorpay')->where('status',1)->first();
             $api = new Api($paymentConfiguration->api_key, $paymentConfiguration->secret_key);
-
 
             PaymentTransaction::find($request->paymentTransactionId)->update([
                 'order_id'        => $request->razorpay_order_id,
@@ -1490,7 +1500,7 @@ class SubscriptionController extends Controller
                 'feature_id' => $request->feature_id ?? '',
                 'end_date' => $request->end_date ?? '',
             ];
-            $amount = intval(($request->amount * 100));
+            $amount = max(100, round($request->amount * 100)); // Ensure minimum ₹1.00 (100 paise)
             $api->order->create([
                 'receipt' => $request->razorpay_order_id,
                 'amount' => $amount, // amount in the smallest currency unit
@@ -1507,52 +1517,4 @@ class SubscriptionController extends Controller
         }
     }
 
-    // public function paystack(Request $request)
-    // {
-    //     try {
-
-    //         $schoolId = Auth::user()->school_id;
-    //         $systemSettings = $this->cache->getSystemSettings();
-    //         $currency_code = $systemSettings['currency_code'] ?? 'INR';
-    //         // $api = app(Api::class);
-    //         DB::setDefaultConnection('mysql');
-    //         $paymentConfiguration = PaymentConfiguration::whereNull('school_id')->where('payment_method', 'paystack')->first();
-    //         $api = new Api($paymentConfiguration->api_key, $paymentConfiguration->secret_key);
-
-
-    //         PaymentTransaction::find($request->paymentTransactionId)->update([
-    //             'order_id'        => $request->razorpay_order_id,
-    //             'payment_id'      => $request->razorpay_payment_id
-    //         ]);
-        
-    //         $customMetaData = [
-    //             'type' => $request->type, // Package, Addon
-    //             'package_type' => $request->package_type ?? '',
-    //             'package_id' => $request->package_id ?? 0,
-    //             'amount' => $request->amount,
-    //             'payment_id' => $request->razorpay_payment_id,
-    //             'currency' => $currency_code,
-    //             'payment_transaction_id' => 0,
-    //             'upcoming_plan_type' => $request->upcoming_plan_type ?? 0,
-    //             'subscription_id' => $request->subscription_id ?? 0,
-    //             'school_id' => $schoolId,
-    //             'feature_id' => $request->feature_id ?? '',
-    //             'end_date' => $request->end_date ?? '',
-    //         ];
-    //         $amount = intval(($request->amount * 100));
-    //         $api->order->create([
-    //             'receipt' => $request->razorpay_order_id,
-    //             'amount' => $amount, // amount in the smallest currency unit
-    //             'currency' => $currency_code,
-    //             'notes' => $customMetaData,
-    //             'payment_capture' => 1,
-    //         ])->toArray();
-            
-    //         return redirect()->back()->with('success',trans('the_payment_has_been_completed_successfully'));
-
-
-    //     } catch (\Throwable $th) {
-    //         return $th;
-    //     }
-    // }
 }

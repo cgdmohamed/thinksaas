@@ -50,7 +50,9 @@ function send_notification($user, $title, $body, $type, $customData = []) {
                             ],
                             "type" => $type,
                             ...$customData,
-                            "sound" => "default"  // This is for iOS sound
+                            "sound" => "default",  // This is for iOS sound
+                            "mutable-content" => 1, 
+                            "content-available" => 1
                         ]
                     ]
                 ]

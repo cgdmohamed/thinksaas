@@ -1050,6 +1050,9 @@ class ExamController extends Controller
             $subjectName = $classSubject->subject->name;
     
             $file_name = $classSection . '_' . $examName . '_' . $subjectName . '_marks_bulk_upload.xlsx';
+
+            $file_name = str_replace(['/', '\\'], '-', $file_name);
+            $file_name = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $file_name);
     
             return Excel::download(new MarksDataExport($data), $file_name);
         } catch (Throwable $e) {

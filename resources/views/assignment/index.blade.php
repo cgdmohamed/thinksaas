@@ -44,11 +44,11 @@
 
                                 <div class="form-group col-sm-12 col-md-6">
                                     <label for="subject-id">{{ __('subject') }} <span class="text-danger">*</span></label>
-                                    <select name="class_subject_id" id="subject-id" class="form-control">
+                                    <select name="subject_id" id="subject-id" class="form-control">
                                         <option value="">-- {{ __('Select Subject') }} --</option>
                                         <option value="data-not-found">-- {{ __('no_data_found') }} --</option>
                                         @foreach ($subjectTeachers as $item)
-                                            <option value="{{ $item->class_subject_id }}" data-class-section="{{ $item->class_section_id }}" data-user="{{ Auth::user()->id }}">{{ $item->subject_with_name }}</option>
+                                            <option value="{{ $item->subject_id }}" data-class-section="{{ $item->class_section_id }}" data-user="{{ Auth::user()->id }}">{{ $item->subject_with_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -238,11 +238,11 @@
 
                                     <div class="form-group col-sm-12 col-md-6">
                                         <label>{{ __('subject') }}</label>
-                                        <select name="class_subject_id" id="edit-subject-id" class="form-control edit_subject_id" style="width:100%;" tabindex="-1" aria-hidden="true">
+                                        <select name="subject_id" id="edit-subject-id" class="form-control edit_subject_id" style="width:100%;" tabindex="-1" aria-hidden="true">
                                             <option value="">-- {{ __('Select Subject') }} --</option>
                                             <option value="data-not-found">-- {{ __('no_data_found') }} --</option>
                                             @foreach ($subjectTeachers as $item)
-                                                <option value="{{ $item->class_subject_id }}" data-class-section="{{ $item->class_section_id }}">{{ $item->subject_with_name}}</option>
+                                                <option value="{{ $item->subject_id }}" data-class-section="{{ $item->class_section_id }}">{{ $item->subject_with_name}}</option>
                                             @endforeach
                                         </select>
                                         {!! Form::hidden('class_subject_id',"", ["id" => "class_subject_id_value"]) !!}

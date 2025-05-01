@@ -77,10 +77,13 @@ class StaffController extends Controller {
         }
         $features = $this->features->getFeatures();
         // $features = array();
-        $allowances = $this->payrollSetting->builder()->where('type', 'allowance')->get();
-        $deductions = $this->payrollSetting->builder()->where('type', 'deduction')->get();
+
+        $allowances = [];
+        $deductions = [];
 
         if(Auth::user()->school_id) {
+            $allowances = $this->payrollSetting->builder()->where('type', 'allowance')->get();
+            $deductions = $this->payrollSetting->builder()->where('type', 'deduction')->get();
             $extraFields = $this->formFields->defaultModel()->where('user_type', 2)->orderBy('rank')->get();    
         } else {
             $extraFields = $this->formFields->defaultModel()->orderBy('rank')->get();
@@ -281,7 +284,7 @@ class StaffController extends Controller {
 
         $sql = $this->user->builder()->whereHas('roles', function ($q) {
             $q->where('custom_role', 1)->whereNot('name', 'Teacher');
-        })->with('staff', 'roles', 'support_school.school', 'staff.staffSalary');
+        })->with('staff', 'roles', 'support_school.school');
 
         //        if (!empty(Auth::user()->school_id)) {
         //            //Code For School Panel

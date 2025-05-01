@@ -151,9 +151,11 @@ class TeacherApiController extends Controller
         ->first();
 
         // Check if the user has the 'Teacher' role or 'Staff' role
-        if ($user->hasRole('Student') || $user->hasRole('Parent') || $user->hasRole('Guardian')) {
-            return ResponseService::errorResponse('You must have a teacher / Staff role to log in.');
-        }
+        if ($user && !$user->hasRole('School Admin')) {
+            if ($user->hasRole('Student') || $user->hasRole('Parent') || $user->hasRole('Guardian') ) {
+                return ResponseService::errorResponse('You must have a teacher / Staff role to log in.');
+            }
+        }   
 
         if ($user && Hash::check($request->password, $user->password)) {
             if ($user->trashed()) {
@@ -197,8 +199,10 @@ class TeacherApiController extends Controller
         $validator = Validator::make($request->all(), [
             'class_section_id' => 'required|string',
             'subject_id' => 'nullable|numeric',
-            'teacher_id' => 'required|numeric',
         ]);
+
+        // \Log::info("class_section_id => ".$request->class_section_id);
+        // \Log::info("subject_id => ".$request->subject_id);
 
         if ($validator->fails()) {
             return ResponseService::validationError($validator->errors()->first());
@@ -265,16 +269,18 @@ class TeacherApiController extends Controller
             ResponseService::validationError($validator->errors()->first());
         }
         try {
-            $sql = $this->assignment->builder()->with('class_section.class.stream', 'file', 'class_subject', 'class_section.medium');
+            $sql = $this->assignment->builder()->with('class_section.class.stream', 'file', 'class_subject', 'class_section.medium', 'assignment_commons');
             if ($request->class_section_id) {
-                $sql = $sql->where('class_section_id', $request->class_section_id);
+                $sql = $sql->whereHas('assignment_commons', function ($q) use ($request) {
+                    $q->where('class_section_id', $request->class_section_id);
+                });
             }
 
             if ($request->class_subject_id) {
-                $sql = $sql->where('class_subject_id', $request->class_subject_id);
+                $sql = $sql->whereHas('assignment_commons', function ($q) use ($request) {
+                    $q->where('class_subject_id', $request->class_subject_id);
+                });
             }
-
-
 
             $data = $sql->orderBy('id', 'DESC')->paginate();
             ResponseService::successResponse('Assignment Fetched Successfully.', $data);
@@ -311,6 +317,7 @@ class TeacherApiController extends Controller
             ResponseService::validationError($validator->errors()->first());
         }
         try {
+            
             DB::beginTransaction();
             $sessionYear = $this->cache->getDefaultSessionYear();
 
@@ -330,29 +337,28 @@ class TeacherApiController extends Controller
             foreach ($section_ids as $section_id) {
                 $assignmentData = array_merge($assignmentData, ['class_section_id' => $section_id]);
             }
-
-            // Store the lesson data
-            // dd($assignmentData);
+          
+            // Store the assignment data
             $assignment = $this->assignment->create($assignmentData);
-            $assignmentCommonData['assignment_id'] = $assignment->id;
 
+            // Create assignment_commons for each section
             foreach ($section_ids as $section_id) {
-                $assignmentData = array_merge($assignmentData, ['class_section_id' => $section_id]);
-                
-                $assignmentCommonData['class_section_id'] = $assignmentData['class_section_id'];
-                
+                $classSubject_ids = $this->classSubject->builder()->where('id',$request->class_subject_id)->first();
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id',$classSubject_ids->subject_id)->first();
+                $assignmentCommonData['assignment_id'] = $assignment->id;
+                $assignmentCommonData['class_section_id'] = $section_id;
+                $assignmentCommonData['class_subject_id'] = $classSubjects->id;
                 $this->assignmentCommon->create($assignmentCommonData);
             }
-
-
-            // If File Exists
+        
+            // Handle File Upload
             if ($request->hasFile('file')) {
-                $fileData = array(); // Empty FileData Array
-            
+                $fileData = [];
+        
                 $assignmentModelAssociate = $this->files->model()->modal()->associate($assignment);
-            
+                
                 foreach ($request->file('file') as $file_upload) {
-
                     $tempFileData = array(
                         'modal_type' => $assignmentModelAssociate->modal_type,
                         'modal_id'   => $assignmentModelAssociate->modal_id,
@@ -360,24 +366,24 @@ class TeacherApiController extends Controller
                         'type'       => 1,
                         'file_url'   => $file_upload, 
                     );
-                    $fileData[] = $tempFileData; // Store temp file data in the array
+                    $fileData[] = $tempFileData;
                 }
-            
+        
                 // Store the files data
                 $this->files->createBulk($fileData);
             }
-            
+        
+            // Handle URL Upload
             if ($request->add_url) {
-                $urlData = array(); // Empty URL data array
-            
+                $urlData = [];
                 $urls = is_array($request->add_url) ? $request->add_url : [$request->add_url];
-            
+        
                 foreach ($urls as $url) {
                     $urlParts = parse_url($url);
-                    $fileName = basename($urlParts['path']); // Extract the file name from the URL
-            
+                    $fileName = basename($urlParts['path']);
+        
                     $assignmentModelAssociate = $this->files->model()->modal()->associate($assignment);
-            
+        
                     $tempUrlData = array(
                         'modal_type' => $assignmentModelAssociate->modal_type,
                         'modal_id'   => $assignmentModelAssociate->modal_id,
@@ -385,8 +391,7 @@ class TeacherApiController extends Controller
                         'type'       => 4,
                         'file_url'   => $url,
                     );
-            
-                    $urlData[] = $tempUrlData; // Store temp URL data in the array
+                    $urlData[] = $tempUrlData;
                 }
             
                 // Store the URL data
@@ -643,11 +648,17 @@ class TeacherApiController extends Controller
             }
 
             if ($request->class_section_id) {
-                $sql = $sql->where('class_section_id', $request->class_section_id);
+                \Log::info("class_section_id => ".$request->class_section_id);
+                $sql = $sql->whereHas('lesson_commons', function ($q) use ($request) {
+                    $q->where('class_section_id', $request->class_section_id);
+                });
             }
 
             if ($request->class_subject_id) {
-                $sql = $sql->where('class_subject_id', $request->class_subject_id);
+                \Log::info("class_subject_id => ".$request->class_subject_id);
+                $sql = $sql->whereHas('lesson_commons', function ($q) use ($request) {
+                    $q->where('class_subject_id', $request->class_subject_id);
+                });
             }
             $data = $sql->orderBy('id', 'DESC')->get();
             ResponseService::successResponse('Lesson Fetched Successfully', $data);
@@ -665,23 +676,46 @@ class TeacherApiController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'name'                  => ['required', new uniqueLessonInClass($request->class_section_id, $request->class_subject_id)],
+                'name'                  => ['required', new uniqueLessonInClass((int)$request->class_section_id, (int)$request->class_subject_id)],
                 'description'           => 'required',
                 'class_section_id'      => 'required|array',
                 'class_section_id.*'    => 'numeric',
                 'class_subject_id'      => 'required|numeric',
-                'file'             => 'nullable|array',
-                'file.*.type'      => 'required|in:file_upload,youtube_link,video_upload',
-                'file.*.name'      => 'required_with:file.*.type',
-                'file.*.thumbnail' => 'required_if:file.*.type,youtube_link,video_upload',
-                'file.*.link'      => ['nullable', 'required_if:file.*.type,youtube_link', new YouTubeUrl], //Regex for YouTube Link
-                'file.*.file'      => ['nullable', 'required_if:file.*.type,file_upload,video_upload', new DynamicMimes, new MaxFileSize($file_upload_size_limit) ],
+                'file_data'             => 'nullable|array',
+                'file_data.*.type'      => 'required|in:file_upload,youtube_link,video_upload,other_link',
+                'file_data.*.name'      => 'required_with:file_data.*.type',
+                'file_data.*.thumbnail' => 'required_if:file_data.*.type,youtube_link,video_upload,other_link',
+        
+                'file_data.*.link' => [
+                    'nullable',
+                    'required_if:file_data.*.type,youtube_link,other_link',
+                    new YouTubeUrl, 
+                ],
+                
+                'file_data.*.link' => [
+                    'nullable',
+                    'required_if:file_data.*.type,other_link',
+                    'url',
+                    
+                ],
+
+                'file_data.*.file' => [
+                    'nullable',
+                    'required_if:file_data.*.type,file_upload,video_upload',
+                    new DynamicMimes(),
+                    new MaxFileSize($file_upload_size_limit), // Max file size validation
+                ],
             ],
             [
-                'name.unique' => trans('lesson_already_exists'),
-                'file.*.file' => trans('The file Uploaded must be less than :file_upload_size_limit MB.', [
-                    'file_upload_size_limit' => $file_upload_size_limit,  
+                'file_data.*.file.required_if' => trans('The file field is required when uploading a file.'),
+                'file_data.*.file.dynamic_mimes' => trans('The uploaded file type is not allowed.'),
+                'file_data.*.file.max_file_size' => trans('The file uploaded must be less than :file_upload_size_limit MB.', [
+                    'file_upload_size_limit' => $file_upload_size_limit,
                 ]),
+                'file_data.*.link.required_if' => trans('The link field is required when the type is YouTube link or Other link.'),
+                'file_data.*.link.url' => trans('The provided link must be a valid URL.'),
+                'file_data.*.link.youtube_url' => trans('The provided YouTube URL is not valid.'),
+                'file_data.*.file.required_if' => trans('The file is required when uploading a video or file.'),
             ]
         );
 
@@ -710,16 +744,20 @@ class TeacherApiController extends Controller
                 $lessonData = array_merge($request->all(), ['class_section_id' => $section_id]);
             }
 
-            // Store the lesson data
             $lesson = $this->lesson->create($lessonData);
-            
-            $lessonCommonData['lesson_id'] = $lesson->id;
-            
-            foreach ($section_ids as $section_id) {
-                $lessonData = array_merge($request->all(), ['class_section_id' => $section_id]);
-                
-                $lessonCommonData['class_section_id'] = $lessonData['class_section_id'];
-                $this->lessonCommon->create($lessonCommonData);
+
+            $classSection = [];
+            $classSubjects = [];
+            if($request->class_section_id) {
+                foreach ($request->class_section_id as $section_id) {
+                    $classSubject_ids = $this->classSubject->builder()->where('id',$request->class_subject_id)->first();
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                    $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id',$classSubject_ids->subject_id)->first();
+                    $lessonCommonData['lesson_id'] = $lesson->id;
+                    $lessonCommonData['class_section_id'] = $section_id;
+                    $lessonCommonData['class_subject_id'] = $classSubjects->id;
+                    $this->lessonCommon->create($lessonCommonData);
+                }
             }
 
             $lessonFile = $this->files->model();
@@ -763,6 +801,7 @@ class TeacherApiController extends Controller
         ResponseService::noFeatureThenSendJson('Lesson Management');
         ResponseService::noPermissionThenSendJson('lesson-edit');
         $file_upload_size_limit = $this->cache->getSystemSettings('file_upload_size_limit');
+       
         $validator = Validator::make($request->all(), [
             'lesson_id'        => 'required|numeric',
             'name'             => 'required',
@@ -812,6 +851,7 @@ class TeacherApiController extends Controller
                 //                $lessonFileData = array();
 
                 foreach ($request->file as $file) {
+                    // dd($file);
                     if ($file['type']) {
 
                         // Create A File Model Instance
@@ -867,7 +907,9 @@ class TeacherApiController extends Controller
                         $tempFileData['created_at'] = date('Y-m-d H:i:s');
                         $tempFileData['updated_at'] = date('Y-m-d H:i:s');
 
-                        $this->files->updateOrCreate(['id' => $file['id']], $tempFileData);
+                       
+                        $this->files->updateOrCreate(['id' => $file['id'] ?? null ], $tempFileData);
+                        
                     }
                 }
             }
@@ -924,8 +966,14 @@ class TeacherApiController extends Controller
             ResponseService::validationError($validator->errors()->first());
         }
         try {
-            $sql = $this->topic->builder()->with('lesson.class_section', 'lesson.class_subject.subject', 'file');
-            $data = $sql->where('lesson_id', $request->lesson_id)->orderBy('id', 'DESC')->get();
+            // $sql = $this->topic->builder()->with('lesson_topics.class_section', 'lesson_topics.class_subject.subject', 'file');
+            // $data = $sql->where('lesson_id', $request->lesson_id)->orderBy('id', 'DESC')->get();
+            $sql = $this->topic->builder()->with('class_section', 'class_subject.subject', 'file');
+            
+            $sql = $sql->whereHas('topic_commons', function ($q) use ($request) {
+                $q->where('lesson_id', $request->lesson_id);
+            });
+            $data = $sql->orderBy('id', 'DESC')->get();
             ResponseService::successResponse('Topic Fetched Successfully', $data);
         } catch (Throwable $e) {
             ResponseService::logErrorResponse($e);
@@ -1013,14 +1061,16 @@ class TeacherApiController extends Controller
             $lessonFile = $this->files->model();
             $lessonModelAssociate = $lessonFile->modal()->associate($topics);
 
-            //create common topic data
+            // Create lesson topic common data for each section
             foreach ($section_ids as $section_id) {
-                $topicCommonData = [
-                    'lesson_topics_id' => $topics->id,
-                    'class_section_id' => $section_id,
-                ];
-                $this->topicCommon->create($topicCommonData);
-            }
+                $classSubject_ids = $this->classSubject->builder()->where('id',$request->class_subject_id)->first();
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id',$classSubject_ids->subject_id)->first();
+                $lessonTopicCommonData = ['lesson_topics_id' => $topics->id];
+                $lessonTopicCommonData['class_section_id'] = $section_id;
+                $lessonTopicCommonData['class_subject_id'] = $classSubjects->id;
+                $this->topicCommon->create($lessonTopicCommonData);
+            }   
 
             // Create a file model instance
             if (!empty($lessonTopicFileData)) {
@@ -1157,7 +1207,7 @@ class TeacherApiController extends Controller
                         $fileData['created_at'] = date('Y-m-d H:i:s');
                         $fileData['updated_at'] = date('Y-m-d H:i:s');
 
-                        $this->files->updateOrCreate(['id' => $file['id']], $fileData);
+                        $this->files->updateOrCreate(['id' => $file['id'] ?? null], $fileData);
                     }
                 }
             }
@@ -1334,10 +1384,15 @@ class TeacherApiController extends Controller
                     $q->where('class_section_id', $request->class_section_id);
                 });
             }
-            if ($request->class_subject_id) {
-                $sql = $sql->whereHas('announcement_class', function ($q) use ($request) {
-                    $q->where('class_subject_id', $request->class_subject_id);
+            if ($request->subject_id) {
+                // $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                // $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id', $request->subject_id)->first();
+                $sql = $sql->with('class_subjects')->whereHas('announcement_class', function ($q) use ($request) {
+                    $q->where('class_subjects.subject_id', $request->subject_id);
                 });
+                // $sql = $sql->whereHas('announcement_class', function ($q) use ($request) {
+                //     $q->where('class_subject_id', $request->class_subject_id);
+                // });
             }
 
             $data = $sql->orderBy('id', 'DESC')->paginate();
@@ -1390,48 +1445,53 @@ class TeacherApiController extends Controller
             $announcement = $this->announcement->create($announcementData); // Store Data
             $announcementClassData = array();
 
-            if (!empty($request->class_subject_id)) {
+            if (!empty($request->subject_id)) {
 
+                foreach ($request->class_section_id as $section_id) {
+                    $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                    $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id', $request->subject_id)->first();
+                }
                 // When Subject is passed then Store the data according to Subject Teacher
                 $teacherId = Auth::user()->id; // Teacher ID
-                $subjectTeacherData = $this->subjectTeacher->builder()->whereIn('class_section_id', $request->class_section_id)->where(['teacher_id' => $teacherId, 'class_subject_id' => $request->class_subject_id])->with('subject')->first(); // Get the Subject Teacher Data
-
-                // $subjectTeacherData = $this->subjectTeacher->builder()->whereIn('class_section_id', $request->class_section_id)->where('teacher_id', $teacherId)->where('subject_id',$request->class_subject_id)->with('subject')->first();// Get the Subject Teacher Data
-                
+                $subjectTeacherData = $this->subjectTeacher->builder()->whereIn('class_section_id', $request->class_section_id)->where(['teacher_id' => $teacherId, 'class_subject_id' => $classSubjects->id])->with('subject')->first(); // Get the Subject Teacher Data
                 $subjectName = $subjectTeacherData->subject_with_name; // Subject Name
 
                 // Check the Subject Type and Select Students According to it for Notification
-                $getClassSubjectType = $this->classSubject->findById($request->class_subject_id,['type']);
+                $getClassSubjectType = $this->classSubject->findById($classSubjects->id,['type']);
                 if ($getClassSubjectType == 'Elective') {
-                    $getStudentId = $this->studentSubject->builder()->select('student_id')->whereIn('class_section_id', $request->class_section_id)->where(['class_subject_id' => $request->class_subject_id])->get()->pluck('student_id'); // Get the Student's ID According to Class Subject
+                    $getStudentId = $this->studentSubject->builder()->select('student_id')->whereIn('class_section_id', $request->class_section_id)->where(['class_subject_id' => $classSubjects->id])->get()->pluck('student_id'); // Get the Student's ID According to Class Subject
                     $notifyUser = $this->student->builder()->select('user_id')->whereIn('id', $getStudentId)->get()->pluck('user_id'); // Get the Student's User ID
                 } else {
                     $notifyUser = $this->student->builder()->select('user_id')->whereIn('class_section_id', $request->class_section_id)->get()->pluck('user_id'); // Get the All Student's User ID In Specified Class
                 }
 
-                // Set class section with subject
-                foreach ($request->class_section_id as $class_section) {
-                    $announcementClassData[] = [
-                        'announcement_id'  => $announcement->id,
-                        'class_section_id' => $class_section,
-                        'class_subject_id' => $request->class_subject_id
-                    ];
-                }
-                $title = trans('New announcement in') . $subjectName; // Title for Notification
+                $title = trans('New announcement in') . " " .$subjectName; // Title for Notification
 
             } else {
                 $notifyUser = $this->student->builder()->select('user_id')->whereIn('class_section_id', $request->class_section_id)->get()->pluck('user_id'); // Get the Student's User ID of Specified Class for Notification
 
-                // Set class sections
-                foreach ($request->class_section_id as $class_section) {
-                    $announcementClassData[] = [
-                        'announcement_id'  => $announcement->id,
-                        'class_section_id' => $class_section
-                    ];
-                }
                 $title = trans('New announcement'); // Title for Notification
             }
-            $this->announcementClass->upsert($announcementClassData, ['announcement_id', 'class_section_id', 'school_id'], ['announcement_id', 'class_section_id', 'school_id', 'class_subject_id']);
+
+            foreach ($request->class_section_id as $section_id) {
+                $classSection = $this->classSection->builder()->where('id', $section_id)->with('class')->first();
+                $classSubjects = $this->classSubject->builder()->where('class_id', $classSection->class->id)->where('subject_id', $request->subject_id)->first();
+
+                if (!empty($request->subject_id)) {
+                    $announcementClassData = [
+                        'announcement_id'   => $announcement->id,
+                        'class_section_id'  => $section_id,
+                        'class_subject_id'  => $classSubjects->id
+                    ];
+                } else {
+                    $announcementClassData = [
+                        'announcement_id'   => $announcement->id,
+                        'class_section_id'  => $section_id,
+                    ];
+                }
+        
+                $this->announcementClass->create($announcementClassData);
+            }
 
             // If File Exists
             if ($request->hasFile('file')) {

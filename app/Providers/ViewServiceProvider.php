@@ -151,8 +151,11 @@ class ViewServiceProvider extends ServiceProvider {
             $view->with('systemSettings', $cache->getSystemSettings());
         });
 
-        View::composer('layouts.master', static function (\Illuminate\View\View $view) use ($cache) {
+        View::composer('layouts.home_page.master', static function (\Illuminate\View\View $view) use ($cache) {
             $view->with('systemSettings', $cache->getSystemSettings());
+            if (!empty(Auth::user()->school_id)) {
+                $view->with('schoolSettings', $cache->getSchoolSettings());
+            }
         });
 
         View::composer('layouts.school.master', static function (\Illuminate\View\View $view) use ($cache) {

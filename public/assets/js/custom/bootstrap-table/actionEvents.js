@@ -861,7 +861,6 @@ window.sliderEvents = {
 
 window.schoolEvents = {
     'click .edit-data': function (e, value, row) {
-        console.log(row.extra_fields);
         $('#edit_id').val(row.id);
         $('#edit_school_name').val(row.name);
         $('#edit-school-logo-tag').attr('src', row.logo);
@@ -869,6 +868,23 @@ window.schoolEvents = {
         $('#edit_school_support_phone').val(row.support_phone);
         $('#edit_school_address').val(row.address);
         $('#edit_school_tagline').val(row.tagline);
+
+
+        // set the school url based on the domain type
+        $('.school_url').attr('href', '');
+        $('.school_url').text('');
+        if (row.school_domain && row.school_url) {
+            if(row.domain_type == "default") {
+                $('.school_url').attr('href', row.school_url);
+                $('.school_url').text(row.school_url);
+            } else {
+                $('.school_url').attr('href', row.school_url);
+                $('.school_url').text(row.school_url);
+            }
+        } else {
+            $('.school_url').attr('href', '');
+            $('.school_url').text('');
+        }
       
         $('#school_code').val(row.code);
 
@@ -900,6 +916,13 @@ window.schoolEvents = {
             $('.defaultDomain').hide().find('input').prop('disabled', true);
             $('.customDomain').hide().find('input').prop('disabled', true);
 
+        }
+
+        // Hide the school url if the default domain is not set
+        if($('#edit_default_domain').val()) {
+            $('#school_url').hide();
+        } else {
+            $('#school_url').show();
         }
         
         if (row.active_plan == '-') {

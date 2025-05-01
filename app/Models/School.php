@@ -64,7 +64,7 @@ class School extends Model
 
     public function extra_school_details()
     {
-        return $this->hasMany(ExtraSchoolData::class, 'school_id', 'id');
+        return $this->hasMany(ExtraSchoolData::class, 'school_id', 'id'); 
     }
 
     public function books()

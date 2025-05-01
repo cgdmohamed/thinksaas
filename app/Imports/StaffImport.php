@@ -108,7 +108,7 @@ class StaffImport implements ToCollection, WithHeadingRow
                     $users->givePermissionTo($leave_permission);
                 }
     
-                $staff->create([
+                $staff->updateOrCreate( ['user_id' => $users->id] ,[
                     'user_id'       => $users->id,
                     'qualification' => null,
                     'salary'        => $row['salary'] ?? 0,

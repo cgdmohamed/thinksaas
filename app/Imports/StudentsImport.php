@@ -96,8 +96,18 @@ class FirstSheetImport implements ToCollection, WithHeadingRow
             '*.guardian_last_name'  => 'required',
             '*.guardian_mobile'     => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
         ],[
+            '*.first_name.required' => 'Please enter the first name.',
+            '*.last_name.required' => 'Please enter the last name.',
+            '*.mobile.required' => 'Please enter the mobile number.',
+            '*.gender.required' => 'Please select the gender.',
             '*.dob.date' => 'Please ensure that the dob date format you use is either DD-MM-YYYY or MM/DD/YYYY.',
             '*.admission_date.date' => 'Please ensure that the admission date format you use is either DD-MM-YYYY or MM/DD/YYYY.',
+            '*.guardian_email.required' => 'Please enter the guardian email.',
+            '*.guardian_email.email' => 'Please enter a valid email address.',
+            '*.guardian_first_name.required' => 'Please enter the guardian first name.',
+            '*.guardian_last_name.required' => 'Please enter the guardian last name.',
+            '*.guardian_mobile.required' => 'Please enter the guardian mobile number.',
+            
         ]);
 
         //             If Validation fails then this will throw the ValidationFail Exception
