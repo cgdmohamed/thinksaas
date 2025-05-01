@@ -21,5 +21,9 @@
         "sass-loader": "^11.0.1",
         "vue": "^2.6.12",
         "vue-template-compiler": "^2.6.12"
+    },
+    "dependencies": {
+        "laravel-vite-plugin": "^1.2.0",
+        "vite": "^6.3.4"
     }
 }
